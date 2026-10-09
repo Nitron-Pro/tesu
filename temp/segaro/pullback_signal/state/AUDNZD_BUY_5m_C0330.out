@@ -1,0 +1,11 @@
+2026-09-30 04:32:18 start FOREXCOM:AUDNZD BUY 5m dec=5 ref=AUDNZD20260930C0330 base_stop=1.23836 h1_invalid=1.2387 run=AUDNZD_BUY_5m_C0330 pid=1483833
+2026-09-30 04:32:18 EVENT {"type": "A_set", "symbol": "FOREXCOM:AUDNZD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 04:25", "candle_close_tehran": "2026-09-30 04:30", "candle_ts": 1790729700, "A": 1.238865, "atr": 0.0003462, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference low of order-time candle (red)", "emitted_at": "2026-09-30 04:32:18"}
+2026-09-30 04:32:18 H1 baseline: last closed H1 2026-09-30 03:30 close 1.23911
+2026-09-30 04:35:01 candle 2026-09-30 04:30 O 1.23911 H 1.239535 L 1.23911 C 1.2395 bull
+2026-09-30 04:40:01 candle 2026-09-30 04:35 O 1.2395 H 1.23982 L 1.239115 C 1.239615 bull
+2026-09-30 04:45:01 candle 2026-09-30 04:40 O 1.239615 H 1.23995 L 1.239615 C 1.239925 bull
+2026-09-30 04:50:01 candle 2026-09-30 04:45 O 1.239925 H 1.24028 L 1.23985 C 1.24027 bull
+2026-09-30 04:55:01 candle 2026-09-30 04:50 O 1.24027 H 1.24042 L 1.240035 C 1.24041 bull
+2026-09-30 05:00:02 candle 2026-09-30 04:55 O 1.24041 H 1.240565 L 1.240075 C 1.240315 bear
+2026-09-30 05:00:02 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:AUDNZD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 04:55", "candle_close_tehran": "2026-09-30 05:00", "candle_ts": 1790731500, "A": 1.238865, "atr": 0.0003462, "entry": 1.2405996197550566, "sl": 1.240075, "tp": [1.2458458173056224], "emitted_at": "2026-09-30 05:00:02"}
+2026-09-30 05:00:02 TRADOR>> ENTRY | AUDNZD | BUY | STOP 1.24060 | SL 1.24008 | TP 1.24580 | DOUBLE no | REF AUDNZD20260930C0330-1

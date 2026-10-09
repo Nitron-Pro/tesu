@@ -1,0 +1,8 @@
+2026-09-30 09:32:11 start FOREXCOM:USDCHF BUY 5m dec=5 ref=USDCHF20260930C0830 base_stop=0.83349 h1_invalid=0.83354 run=USDCHF_BUY_5m_C0830 pid=1621345
+2026-09-30 09:32:11 EVENT {"type": "A_set", "symbol": "FOREXCOM:USDCHF", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:25", "candle_close_tehran": "2026-09-30 09:30", "candle_ts": 1790747700, "A": 0.833495, "atr": 0.00021896, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference low of order-time candle (red)", "emitted_at": "2026-09-30 09:32:11"}
+2026-09-30 09:32:12 H1 baseline: last closed H1 2026-09-30 08:30 close 0.833675
+2026-09-30 09:35:01 candle 2026-09-30 09:30 O 0.833675 H 0.83375 L 0.833265 C 0.83329 bear
+2026-09-30 09:35:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:USDCHF", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:30", "candle_close_tehran": "2026-09-30 09:35", "candle_ts": 1790748000, "A": 0.833265, "atr": 0.00023796, "entry": null, "sl": null, "tp": null, "previous_A": 0.833495, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle red", "emitted_at": "2026-09-30 09:35:01"}
+2026-09-30 09:35:01 EVENT {"type": "base_stop_broken", "candle": "2026-09-30 09:30", "low": 0.833265, "high": 0.83375, "base_stop": 0.83349, "emitted_at": "2026-09-30 09:35:01"}
+2026-09-30 09:35:01 cancel (base stop): no pending order announced -> nothing sent
+2026-09-30 09:35:01 FINISHED: CANCELLED: base stop 0.83349 broken by candle 2026-09-30 09:30

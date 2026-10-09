@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1791549400234",
+    "name": "طلا 40 دبل",
+    "symbol": "XAUUSD",
+    "timeframe": "1m",
+    "riskUsd": 40,
+    "rrRatio": 4,
+    "isDouble": true,
+    "maxOpenPositions": 4,
+    "martingaleEnabled": false,
+    "martingaleStepPct": 10
+  }
+]

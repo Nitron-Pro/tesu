@@ -1,0 +1,32 @@
+2026-09-29 22:31:48 start FOREXCOM:AUDUSD SELL 5m dec=5 ref=AUDUSD20260929C2130 base_stop=0.69901 h1_invalid=0.69869 run=AUDUSD_SELL_5m_C2130 pid=1337943
+2026-09-29 22:31:48 EVENT {"type": "A_set", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:25", "candle_close_tehran": "2026-09-29 22:30", "candle_ts": 1790708100, "A": 0.69867, "atr": 0.00033488, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference high of order-time candle (white)", "emitted_at": "2026-09-29 22:31:48"}
+2026-09-29 22:31:48 H1 baseline: last closed H1 2026-09-29 21:30 close 0.698625
+2026-09-29 22:35:01 candle 2026-09-29 22:30 O 0.698625 H 0.698745 L 0.698595 C 0.69872 bull
+2026-09-29 22:35:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:30", "candle_close_tehran": "2026-09-29 22:35", "candle_ts": 1790708400, "A": 0.698745, "atr": 0.00032167, "entry": null, "sl": null, "tp": null, "previous_A": 0.69867, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle white", "emitted_at": "2026-09-29 22:35:01"}
+2026-09-29 22:40:01 candle 2026-09-29 22:35 O 0.69872 H 0.69884 L 0.69862 C 0.69873 bull
+2026-09-29 22:40:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:35", "candle_close_tehran": "2026-09-29 22:40", "candle_ts": 1790708700, "A": 0.69884, "atr": 0.00031441, "entry": null, "sl": null, "tp": null, "previous_A": 0.698745, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle white", "emitted_at": "2026-09-29 22:40:01"}
+2026-09-29 22:45:01 candle 2026-09-29 22:40 O 0.69874 H 0.698765 L 0.69863 C 0.698665 bear
+2026-09-29 22:50:01 candle 2026-09-29 22:45 O 0.698665 H 0.69881 L 0.6986 C 0.69881 bull
+2026-09-29 22:50:01 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:45", "candle_close_tehran": "2026-09-29 22:50", "candle_ts": 1790709300, "A": 0.69884, "atr": 0.00031441, "entry": 0.6985685589937942, "sl": 0.69881, "tp": [0.696154148931736], "emitted_at": "2026-09-29 22:50:01"}
+2026-09-29 22:50:01 TRADOR>> ENTRY | AUDUSD | SELL | STOP 0.69857 | SL 0.69881 | TP 0.69617 | DOUBLE no | REF AUDUSD20260929C2130-1
+2026-09-29 22:55:01 candle 2026-09-29 22:50 O 0.69881 H 0.698835 L 0.69875 C 0.698825 bull
+2026-09-29 22:55:01 EVENT {"type": "pending_moved", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:50", "candle_close_tehran": "2026-09-29 22:55", "candle_ts": 1790709600, "A": 0.69884, "atr": 0.00031441, "entry": 0.6987185589937942, "sl": 0.698835, "tp": [0.6975541489317364], "previous_entry": 0.6985685589937942, "previous_sl": 0.69881, "reason": "new white candle", "emitted_at": "2026-09-29 22:55:01"}
+2026-09-29 22:55:01 TRADOR>> MOVE | AUDUSD | REF AUDUSD20260929C2130-1 | STOP 0.69872 | SL 0.69883 | TP 0.69762
+2026-09-29 23:00:02 candle 2026-09-29 22:55 O 0.698825 H 0.698925 L 0.69877 C 0.698785 bear
+2026-09-29 23:00:02 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 22:55", "candle_close_tehran": "2026-09-29 23:00", "candle_ts": 1790709900, "A": 0.698925, "atr": 0.00027112, "entry": null, "sl": null, "tp": null, "previous_A": 0.69884, "pending_cancelled": true, "a_candle_counts_as_move": true, "note": "A candle red -> counts as the move", "emitted_at": "2026-09-29 23:00:02"}
+2026-09-29 23:00:02 TRADOR>> CANCEL | AUDUSD | REF AUDUSD20260929C2130-1
+2026-09-29 23:05:01 candle 2026-09-29 23:00 O 0.698785 H 0.698825 L 0.69866 C 0.69869 bear
+2026-09-29 23:10:01 candle 2026-09-29 23:05 O 0.69869 H 0.69895 L 0.69868 C 0.69886 bull
+2026-09-29 23:10:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 23:05", "candle_close_tehran": "2026-09-29 23:10", "candle_ts": 1790710500, "A": 0.69895, "atr": 0.000264, "entry": null, "sl": null, "tp": null, "previous_A": 0.698925, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle white", "emitted_at": "2026-09-29 23:10:01"}
+2026-09-29 23:15:01 candle 2026-09-29 23:10 O 0.69886 H 0.69886 L 0.698585 C 0.69864 bear
+2026-09-29 23:20:01 candle 2026-09-29 23:15 O 0.69864 H 0.698665 L 0.698505 C 0.698515 bear
+2026-09-29 23:25:01 candle 2026-09-29 23:20 O 0.698515 H 0.69882 L 0.698505 C 0.69879 bull
+2026-09-29 23:25:01 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 23:20", "candle_close_tehran": "2026-09-29 23:25", "candle_ts": 1790711400, "A": 0.69895, "atr": 0.000264, "entry": 0.6984786001380134, "sl": 0.69882, "tp": [0.6950646015181479], "emitted_at": "2026-09-29 23:25:01"}
+2026-09-29 23:25:01 TRADOR>> ENTRY | AUDUSD | SELL | STOP 0.69848 | SL 0.69882 | TP 0.69508 | DOUBLE no | REF AUDUSD20260929C2130-2
+2026-09-29 23:30:01 candle 2026-09-29 23:25 O 0.69879 H 0.698825 L 0.69858 C 0.698715 bear
+2026-09-29 23:30:01 EVENT {"type": "pending_moved", "symbol": "FOREXCOM:AUDUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 23:25", "candle_close_tehran": "2026-09-29 23:30", "candle_ts": 1790711700, "A": 0.69895, "atr": 0.000264, "entry": 0.6984786001380134, "sl": 0.698825, "tp": [0.6950146015181475], "previous_entry": 0.6984786001380134, "previous_sl": 0.69882, "reason": "high beyond SL", "emitted_at": "2026-09-29 23:30:01"}
+2026-09-29 23:30:01 TRADOR>> MOVE | AUDUSD | REF AUDUSD20260929C2130-2 | STOP 0.69848 | SL 0.69883 | TP 0.69498
+2026-09-29 23:30:02 H1 close 2026-09-29 22:30 O 0.698625 H 0.69895 L 0.698505 C 0.698715
+2026-09-29 23:30:02 EVENT {"type": "h1_invalidation", "candle": "2026-09-29 22:30", "close": 0.698715, "level": 0.69869, "emitted_at": "2026-09-29 23:30:02"}
+2026-09-29 23:30:02 TRADOR>> CANCEL | AUDUSD | REF AUDUSD20260929C2130-2
+2026-09-29 23:30:02 FINISHED: CANCELLED: H1 candle 2026-09-29 22:30 closed 0.698715 beyond 0.69869

@@ -1,0 +1,26 @@
+[package]
+name = "nora"
+version = "1.0.0"
+description = "Modular offline-first desktop boilerplate with Tauri 2.0"
+authors = ["Nora Team"]
+edition = "2021"
+
+[lib]
+name = "nora_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.5", features = [] }
+
+[dependencies]
+tauri = { version = "2.1.1", features = ["tray-icon"] }
+tauri-plugin-shell = "2.0.1"
+tauri-plugin-notification = "2.0.1"
+tauri-plugin-autostart = "2.0.1"
+# tauri-plugin-updater is used when Tauri binary signing keys (pubkey) are provisioned
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serialport = "4.6.0"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1", features = ["full"] }

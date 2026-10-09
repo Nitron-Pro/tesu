@@ -1,0 +1,2 @@
+{"seq": 1, "time_tehran": "2026-09-30 14:35:01", "line": "ENTRY | XAUUSD | BUY | STOP 4185.67 | SL 4183.93 | TP 4203.07 | DOUBLE no | REF XAUUSD20260930C1330-1"}
+{"seq": 2, "time_tehran": "2026-09-30 14:40:01", "line": "CANCEL | XAUUSD | REF XAUUSD20260930C1330-1"}

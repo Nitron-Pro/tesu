@@ -1,0 +1,20 @@
+2026-09-29 18:32:03 start FOREXCOM:AUDJPY BUY 5m dec=3 ref=AUDJPY20260929C1730 base_stop=109.948 h1_invalid=109.941 run=AUDJPY_BUY_5m_C1730 pid=1245774
+2026-09-29 18:32:03 EVENT {"type": "A_set", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:25", "candle_close_tehran": "2026-09-29 18:30", "candle_ts": 1790693700, "A": 109.9735, "atr": 0.05559084, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": true, "note": "reference low of order-time candle (white) -> counts as the move, next red candle places the stop", "emitted_at": "2026-09-29 18:32:03"}
+2026-09-29 18:32:04 H1 baseline: last closed H1 2026-09-29 17:30 close 110.071
+2026-09-29 18:35:01 candle 2026-09-29 18:30 O 110.071 H 110.082 L 110.0145 C 110.0145 bear
+2026-09-29 18:35:01 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:30", "candle_close_tehran": "2026-09-29 18:35", "candle_ts": 1790694000, "A": 109.9735, "atr": 0.05559084, "entry": 110.08755908420814, "sl": 110.0145, "tp": [110.81814992628954], "emitted_at": "2026-09-29 18:35:01"}
+2026-09-29 18:35:01 TRADOR>> ENTRY | AUDJPY | BUY | STOP 110.088 | SL 110.014 | TP 110.828 | DOUBLE no | REF AUDJPY20260929C1730-1
+2026-09-29 18:40:01 candle 2026-09-29 18:35 O 110.0145 H 110.0255 L 109.996 C 110.003 bear
+2026-09-29 18:40:01 EVENT {"type": "pending_moved", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:35", "candle_close_tehran": "2026-09-29 18:40", "candle_ts": 1790694300, "A": 109.9735, "atr": 0.05559084, "entry": 110.03105908420814, "sl": 109.996, "tp": [110.38164992628957], "previous_entry": 110.08755908420814, "previous_sl": 110.0145, "reason": "new red candle", "emitted_at": "2026-09-29 18:40:01"}
+2026-09-29 18:40:01 TRADOR>> MOVE | AUDJPY | REF AUDJPY20260929C1730-1 | STOP 110.031 | SL 109.996 | TP 110.381
+2026-09-29 18:45:02 candle 2026-09-29 18:40 O 110.004 H 110.014 L 109.9685 C 110.0025 bear
+2026-09-29 18:45:02 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:40", "candle_close_tehran": "2026-09-29 18:45", "candle_ts": 1790694600, "A": 109.9685, "atr": 0.05387302, "entry": null, "sl": null, "tp": null, "previous_A": 109.9735, "pending_cancelled": true, "a_candle_counts_as_move": false, "note": "A candle red", "emitted_at": "2026-09-29 18:45:02"}
+2026-09-29 18:45:02 TRADOR>> CANCEL | AUDJPY | REF AUDJPY20260929C1730-1
+2026-09-29 18:50:01 candle 2026-09-29 18:45 O 110.0025 H 110.0115 L 109.972 C 109.9945 bear
+2026-09-29 18:55:01 candle 2026-09-29 18:50 O 109.9945 H 109.996 L 109.9555 C 109.9655 bear
+2026-09-29 18:55:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:50", "candle_close_tehran": "2026-09-29 18:55", "candle_ts": 1790695200, "A": 109.9555, "atr": 0.0519645, "entry": null, "sl": null, "tp": null, "previous_A": 109.9685, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle red", "emitted_at": "2026-09-29 18:55:01"}
+2026-09-29 19:00:01 candle 2026-09-29 18:55 O 109.9655 H 109.982 L 109.94 C 109.982 bull
+2026-09-29 19:00:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 18:55", "candle_close_tehran": "2026-09-29 19:00", "candle_ts": 1790695500, "A": 109.94, "atr": 0.05125275, "entry": null, "sl": null, "tp": null, "previous_A": 109.9555, "pending_cancelled": false, "a_candle_counts_as_move": true, "note": "A candle white -> counts as the move", "emitted_at": "2026-09-29 19:00:01"}
+2026-09-29 19:00:01 EVENT {"type": "base_stop_broken", "candle": "2026-09-29 18:55", "low": 109.94, "high": 109.982, "base_stop": 109.948, "emitted_at": "2026-09-29 19:00:01"}
+2026-09-29 19:00:01 cancel (base stop): no pending order announced -> nothing sent
+2026-09-29 19:00:01 FINISHED: CANCELLED: base stop 109.948 broken by candle 2026-09-29 18:55

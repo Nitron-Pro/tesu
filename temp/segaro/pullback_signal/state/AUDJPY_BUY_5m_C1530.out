@@ -1,0 +1,8 @@
+2026-09-29 16:44:46 start FOREXCOM:AUDJPY BUY 5m dec=3 ref=AUDJPY20260929C1530 base_stop=109.948 h1_invalid=109.941 run=AUDJPY_BUY_5m_C1530 pid=1199402
+2026-09-29 16:44:46 EVENT {"type": "A_set", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 16:35", "candle_close_tehran": "2026-09-29 16:40", "candle_ts": 1790687100, "A": 109.962, "atr": 0.05269705, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference low of order-time candle (red)", "emitted_at": "2026-09-29 16:44:46"}
+2026-09-29 16:44:46 H1 baseline: last closed H1 2026-09-29 15:30 close 109.983
+2026-09-29 16:45:01 candle 2026-09-29 16:40 O 109.97 H 109.984 L 109.9445 C 109.974 bull
+2026-09-29 16:45:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDJPY", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-29 16:40", "candle_close_tehran": "2026-09-29 16:45", "candle_ts": 1790687400, "A": 109.9445, "atr": 0.0517544, "entry": null, "sl": null, "tp": null, "previous_A": 109.962, "pending_cancelled": false, "a_candle_counts_as_move": true, "note": "A candle white -> counts as the move", "emitted_at": "2026-09-29 16:45:01"}
+2026-09-29 16:45:01 EVENT {"type": "base_stop_broken", "candle": "2026-09-29 16:40", "low": 109.9445, "high": 109.984, "base_stop": 109.948, "emitted_at": "2026-09-29 16:45:01"}
+2026-09-29 16:45:01 cancel (base stop): no pending order announced -> nothing sent
+2026-09-29 16:45:01 FINISHED: CANCELLED: base stop 109.948 broken by candle 2026-09-29 16:40

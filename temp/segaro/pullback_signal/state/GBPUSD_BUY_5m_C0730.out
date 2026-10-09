@@ -1,0 +1,14 @@
+2026-09-30 08:32:29 start FOREXCOM:GBPUSD BUY 5m dec=5 ref=GBPUSD20260930C0730 base_stop=1.3223 h1_invalid=1.32228 run=GBPUSD_BUY_5m_C0730 pid=1593909
+2026-09-30 08:32:29 EVENT {"type": "A_set", "symbol": "FOREXCOM:GBPUSD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:25", "candle_close_tehran": "2026-09-30 08:30", "candle_ts": 1790744100, "A": 1.32253, "atr": 0.00020958, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": true, "note": "reference low of order-time candle (white) -> counts as the move, next red candle places the stop", "emitted_at": "2026-09-30 08:32:29"}
+2026-09-30 08:32:30 H1 baseline: last closed H1 2026-09-30 07:30 close 1.3227
+2026-09-30 08:35:02 candle 2026-09-30 08:30 O 1.3227 H 1.322805 L 1.322695 C 1.32276 bull
+2026-09-30 08:40:01 candle 2026-09-30 08:35 O 1.32276 H 1.32281 L 1.32268 C 1.32281 bull
+2026-09-30 08:45:03 candle 2026-09-30 08:40 O 1.322805 H 1.322895 L 1.3228 C 1.32287 bull
+2026-09-30 08:50:01 candle 2026-09-30 08:45 O 1.32287 H 1.323145 L 1.322865 C 1.3231 bull
+2026-09-30 08:55:02 candle 2026-09-30 08:50 O 1.3231 H 1.3232 L 1.32309 C 1.323185 bull
+2026-09-30 09:00:02 candle 2026-09-30 08:55 O 1.323185 H 1.32344 L 1.32316 C 1.323405 bull
+2026-09-30 09:05:02 candle 2026-09-30 09:00 O 1.323405 H 1.323765 L 1.323365 C 1.32369 bull
+2026-09-30 09:05:02 EVENT {"type": "no_entry", "symbol": "FOREXCOM:GBPUSD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:00", "candle_close_tehran": "2026-09-30 09:05", "candle_ts": 1790746200, "A": 1.32253, "atr": 0.00020958, "entry": null, "sl": null, "tp": null, "lowest_since_A": 1.323765, "threshold": 1.323577902296743, "reason": "price moved 5.0 ATR from A without an entry", "emitted_at": "2026-09-30 09:05:02"}
+2026-09-30 09:05:02 EVENT {"type": "done", "symbol": "FOREXCOM:GBPUSD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:00", "candle_close_tehran": "2026-09-30 09:05", "candle_ts": 1790746200, "A": 1.32253, "atr": 0.00020958, "entry": null, "sl": null, "tp": null, "reason": "no_entry", "total_positions": 0, "emitted_at": "2026-09-30 09:05:02"}
+2026-09-30 09:05:02 cancel (no entry): no pending order announced -> nothing sent
+2026-09-30 09:05:02 FINISHED: NO ENTRY (5 ATR run without entry)

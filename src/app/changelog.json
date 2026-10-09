@@ -1,0 +1,14 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-09-19",
+    "title": "Initial Release of Nora Base",
+    "highlights": [
+      "Modular Tauri 2.0 + React 18 + TypeScript + Tailwind architecture",
+      "Frameless Windows 11 titlebar and dynamic system integration",
+      "3-level adaptive navigation sidebar",
+      "Hardware abstraction layer for Serial COM ports and printers",
+      "Offline-first design with local changelog and updater foundation"
+    ]
+  }
+]

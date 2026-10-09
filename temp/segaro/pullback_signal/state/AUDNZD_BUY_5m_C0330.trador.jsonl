@@ -1,0 +1,2 @@
+{"seq": 1, "time_tehran": "2026-09-30 05:00:02", "line": "ENTRY | AUDNZD | BUY | STOP 1.24060 | SL 1.24008 | TP 1.24580 | DOUBLE no | REF AUDNZD20260930C0330-1"}
+{"seq": 2, "time_tehran": "2026-09-30 05:03:54", "line": "CANCEL | AUDNZD | REF AUDNZD20260930C0330-1"}

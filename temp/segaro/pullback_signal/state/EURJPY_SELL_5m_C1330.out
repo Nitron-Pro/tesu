@@ -1,0 +1,8 @@
+2026-09-30 14:32:31 start FOREXCOM:EURJPY SELL 5m dec=3 ref=EURJPY20260930C1330 base_stop=178.406 h1_invalid=178.413 run=EURJPY_SELL_5m_C1330 pid=1771004
+2026-09-30 14:32:31 EVENT {"type": "A_set", "symbol": "FOREXCOM:EURJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 14:25", "candle_close_tehran": "2026-09-30 14:30", "candle_ts": 1790765700, "A": 178.404, "atr": 0.06573438, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference high of order-time candle (white)", "emitted_at": "2026-09-30 14:32:31"}
+2026-09-30 14:32:32 H1 baseline: last closed H1 2026-09-30 13:30 close 178.395
+2026-09-30 14:35:02 candle 2026-09-30 14:30 O 178.395 H 178.4195 L 178.365 C 178.3855 bear
+2026-09-30 14:35:02 EVENT {"type": "A_reset", "symbol": "FOREXCOM:EURJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 14:30", "candle_close_tehran": "2026-09-30 14:35", "candle_ts": 1790766000, "A": 178.4195, "atr": 0.06493192, "entry": null, "sl": null, "tp": null, "previous_A": 178.404, "pending_cancelled": false, "a_candle_counts_as_move": true, "note": "A candle red -> counts as the move", "emitted_at": "2026-09-30 14:35:02"}
+2026-09-30 14:35:02 EVENT {"type": "base_stop_broken", "candle": "2026-09-30 14:30", "low": 178.365, "high": 178.4195, "base_stop": 178.406, "emitted_at": "2026-09-30 14:35:02"}
+2026-09-30 14:35:02 cancel (base stop): no pending order announced -> nothing sent
+2026-09-30 14:35:02 FINISHED: CANCELLED: base stop 178.406 broken by candle 2026-09-30 14:30

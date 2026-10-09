@@ -1,0 +1,12 @@
+2026-09-30 08:32:28 start SAXO:XAUUSD SELL 5m dec=2 ref=XAUUSD20260930C0730 base_stop=4184.95 h1_invalid=4182.31 run=XAUUSD_SELL_5m_C0730 pid=1593907
+2026-09-30 08:32:28 EVENT {"type": "A_set", "symbol": "SAXO:XAUUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:25", "candle_close_tehran": "2026-09-30 08:30", "candle_ts": 1790744100, "A": 4179.12, "atr": 2.99118531, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference high of order-time candle (white)", "emitted_at": "2026-09-30 08:32:28"}
+2026-09-30 08:32:29 H1 baseline: last closed H1 2026-09-30 07:30 close 4178.945
+2026-09-30 08:35:02 candle 2026-09-30 08:30 O 4178.96 H 4182.225 L 4178.635 C 4180.29 bull
+2026-09-30 08:35:02 EVENT {"type": "A_reset", "symbol": "SAXO:XAUUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:30", "candle_close_tehran": "2026-09-30 08:35", "candle_ts": 1790744400, "A": 4182.225, "atr": 3.03395779, "entry": null, "sl": null, "tp": null, "previous_A": 4179.12, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle white", "emitted_at": "2026-09-30 08:35:02"}
+2026-09-30 08:40:01 candle 2026-09-30 08:35 O 4179.845 H 4180.61 L 4176.22 C 4176.305 bear
+2026-09-30 08:45:02 candle 2026-09-30 08:40 O 4176.375 H 4177.59 L 4172.485 C 4172.485 bear
+2026-09-30 08:50:02 candle 2026-09-30 08:45 O 4172.37 H 4172.415 L 4165.82 C 4169.575 bear
+2026-09-30 08:50:02 EVENT {"type": "no_entry", "symbol": "SAXO:XAUUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:45", "candle_close_tehran": "2026-09-30 08:50", "candle_ts": 1790745300, "A": 4182.225, "atr": 3.03395779, "entry": null, "sl": null, "tp": null, "lowest_since_A": 4165.82, "threshold": 4167.055211073692, "reason": "price moved 5.0 ATR from A without an entry", "emitted_at": "2026-09-30 08:50:02"}
+2026-09-30 08:50:02 EVENT {"type": "done", "symbol": "SAXO:XAUUSD", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:45", "candle_close_tehran": "2026-09-30 08:50", "candle_ts": 1790745300, "A": 4182.225, "atr": 3.03395779, "entry": null, "sl": null, "tp": null, "reason": "no_entry", "total_positions": 0, "emitted_at": "2026-09-30 08:50:02"}
+2026-09-30 08:50:02 cancel (no entry): no pending order announced -> nothing sent
+2026-09-30 08:50:02 FINISHED: NO ENTRY (5 ATR run without entry)

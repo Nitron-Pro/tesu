@@ -1,0 +1,3 @@
+{"seq": 1, "time_tehran": "2026-09-29 18:35:01", "line": "ENTRY | AUDJPY | BUY | STOP 110.088 | SL 110.014 | TP 110.828 | DOUBLE no | REF AUDJPY20260929C1730-1"}
+{"seq": 2, "time_tehran": "2026-09-29 18:40:01", "line": "MOVE | AUDJPY | REF AUDJPY20260929C1730-1 | STOP 110.031 | SL 109.996 | TP 110.381"}
+{"seq": 3, "time_tehran": "2026-09-29 18:45:02", "line": "CANCEL | AUDJPY | REF AUDJPY20260929C1730-1"}

@@ -1,0 +1,8 @@
+2026-09-30 09:32:11 start FOREXCOM:AUDNZD BUY 5m dec=5 ref=AUDNZD20260930C0830 base_stop=1.23456 h1_invalid=1.23453 run=AUDNZD_BUY_5m_C0830 pid=1621343
+2026-09-30 09:32:11 EVENT {"type": "A_set", "symbol": "FOREXCOM:AUDNZD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:25", "candle_close_tehran": "2026-09-30 09:30", "candle_ts": 1790747700, "A": 1.234815, "atr": 0.00040767, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": true, "note": "reference low of order-time candle (white) -> counts as the move, next red candle places the stop", "emitted_at": "2026-09-30 09:32:11"}
+2026-09-30 09:32:12 H1 baseline: last closed H1 2026-09-30 08:30 close 1.235025
+2026-09-30 09:35:02 candle 2026-09-30 09:30 O 1.235025 H 1.235055 L 1.23405 C 1.23437 bear
+2026-09-30 09:35:02 EVENT {"type": "A_reset", "symbol": "FOREXCOM:AUDNZD", "side": "BUY", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 09:30", "candle_close_tehran": "2026-09-30 09:35", "candle_ts": 1790748000, "A": 1.23405, "atr": 0.00045034, "entry": null, "sl": null, "tp": null, "previous_A": 1.234815, "pending_cancelled": false, "a_candle_counts_as_move": false, "note": "A candle red", "emitted_at": "2026-09-30 09:35:02"}
+2026-09-30 09:35:02 EVENT {"type": "base_stop_broken", "candle": "2026-09-30 09:30", "low": 1.23405, "high": 1.235055, "base_stop": 1.23456, "emitted_at": "2026-09-30 09:35:02"}
+2026-09-30 09:35:02 cancel (base stop): no pending order announced -> nothing sent
+2026-09-30 09:35:02 FINISHED: CANCELLED: base stop 1.23456 broken by candle 2026-09-30 09:30

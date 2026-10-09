@@ -1,0 +1,16 @@
+{
+  "_comment": "teso2 policy. Keys and meanings: /workspace/pullback_core/BOT_GUIDE.md. Only this file is yours to edit.",
+  "symbol": "EURUSD",
+  "tf": "5",
+  "double": false,
+  "chain": 2,
+  "rr": 2.0,
+  "double_rr_first": 1.0,
+  "buffer_atr": 0.1,
+  "cancel_atr": 5.0,
+  "sl_mode": "max",
+  "max_minutes": null,
+  "until": null,
+  "stop_after_stopout": false,
+  "language": "fa"
+}

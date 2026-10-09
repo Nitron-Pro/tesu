@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Tauri & Rust build artifacts
+src-tauri/target/
+local_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+*.log

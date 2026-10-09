@@ -1,0 +1,18 @@
+{
+  "version": "1.1.0",
+  "notes": "Added Smart Updater engine, automatic background downloads, daily checks, and enhanced UI components.",
+  "pub_date": "2026-09-19T14:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "",
+      "url": "http://localhost:1420/updates/nora_1.1.0_x64_en-US.msi.zip"
+    }
+  },
+  "changelog": [
+    "New In-App Updater with background download and manual confirmation modes",
+    "Daily automated check mechanism with persistence in local storage",
+    "Automatic What's New changelog popup after software restart",
+    "Complete EN/FA RTL multilingual UI engine with local storage caching",
+    "Enhanced 3-level sidebar navigation with quick filter search"
+  ]
+}

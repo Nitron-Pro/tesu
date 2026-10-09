@@ -1,0 +1,27 @@
+2026-09-30 08:32:29 start FOREXCOM:USDJPY SELL 5m dec=3 ref=USDJPY20260930C0730 base_stop=157.257 h1_invalid=157.166 run=USDJPY_SELL_5m_C0730 pid=1593906
+2026-09-30 08:32:29 EVENT {"type": "A_set", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:25", "candle_close_tehran": "2026-09-30 08:30", "candle_ts": 1790744100, "A": 157.154, "atr": 0.07803353, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": false, "note": "reference high of order-time candle (white)", "emitted_at": "2026-09-30 08:32:29"}
+2026-09-30 08:32:30 H1 baseline: last closed H1 2026-09-30 07:30 close 157.146
+2026-09-30 08:35:01 candle 2026-09-30 08:30 O 157.146 H 157.158 L 157.106 C 157.108 bear
+2026-09-30 08:35:01 EVENT {"type": "A_reset", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:30", "candle_close_tehran": "2026-09-30 08:35", "candle_ts": 1790744400, "A": 157.158, "atr": 0.07617399, "entry": null, "sl": null, "tp": null, "previous_A": 157.154, "pending_cancelled": false, "a_candle_counts_as_move": true, "note": "A candle red -> counts as the move", "emitted_at": "2026-09-30 08:35:01"}
+2026-09-30 08:40:02 candle 2026-09-30 08:35 O 157.108 H 157.157 L 157.0955 C 157.1255 bull
+2026-09-30 08:40:02 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:35", "candle_close_tehran": "2026-09-30 08:40", "candle_ts": 1790744700, "A": 157.158, "atr": 0.07617399, "entry": 157.08788260076815, "sl": 157.157, "tp": [156.3967086084496], "emitted_at": "2026-09-30 08:40:02"}
+2026-09-30 08:40:02 TRADOR>> ENTRY | USDJPY | SELL | STOP 157.088 | SL 157.157 | TP 156.398 | DOUBLE no | REF USDJPY20260930C0730-1
+2026-09-30 08:45:02 candle 2026-09-30 08:40 O 157.1255 H 157.1255 L 157.069 C 157.082 bear
+2026-09-30 08:45:02 EVENT {"type": "triggered", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 1, "candle_time_tehran": "2026-09-30 08:40", "candle_close_tehran": "2026-09-30 08:45", "candle_ts": 1790745000, "A": 157.158, "atr": 0.07617399, "entry": 157.08788260076815, "sl": 157.157, "tp": [156.3967086084496], "fill_price": 157.08788260076815, "positions": [{"entry": 157.08788260076815, "sl": 157.157, "tp": 156.3967086084496, "rr": 10.0}], "entries_so_far": 1, "notes": [], "emitted_at": "2026-09-30 08:45:02"}
+2026-09-30 08:45:02 EVENT {"type": "A_set", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 2, "candle_time_tehran": "2026-09-30 08:40", "candle_close_tehran": "2026-09-30 08:45", "candle_ts": 1790745000, "A": 157.157, "atr": 0.07379543, "entry": null, "sl": null, "tp": null, "a_candle_counts_as_move": true, "note": "chain leg 2: A = SL of previous entry (trigger candle red -> counts as the move)", "emitted_at": "2026-09-30 08:45:02"}
+2026-09-30 08:45:02 ENTRY 1 TRIGGERED at 157.08788260076815 (candle 2026-09-30 08:40)
+2026-09-30 08:50:01 candle 2026-09-30 08:45 O 157.082 H 157.088 L 157.031 C 157.064 bear
+2026-09-30 08:55:01 candle 2026-09-30 08:50 O 157.064 H 157.0655 L 157.0185 C 157.036 bear
+2026-09-30 09:00:02 candle 2026-09-30 08:55 O 157.036 H 157.0435 L 156.9905 C 156.995 bear
+2026-09-30 09:05:01 candle 2026-09-30 09:00 O 156.995 H 157.0005 L 156.9135 C 156.9305 bear
+2026-09-30 09:10:01 candle 2026-09-30 09:05 O 156.9305 H 157.0365 L 156.926 C 157.0275 bull
+2026-09-30 09:10:01 EVENT {"type": "pending_placed", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 2, "candle_time_tehran": "2026-09-30 09:05", "candle_close_tehran": "2026-09-30 09:10", "candle_ts": 1790746500, "A": 157.157, "atr": 0.07379543, "entry": 156.91862045678477, "sl": 157.0365, "tp": [155.73982502463252], "emitted_at": "2026-09-30 09:10:01"}
+2026-09-30 09:10:01 TRADOR>> ENTRY | USDJPY | SELL | STOP 156.919 | SL 157.036 | TP 155.749 | DOUBLE no | REF USDJPY20260930C0730-2
+2026-09-30 09:15:02 candle 2026-09-30 09:10 O 157.0275 H 157.0365 L 156.984 C 157.0015 bear
+2026-09-30 09:20:01 candle 2026-09-30 09:15 O 157.0015 H 157.013 L 156.9515 C 156.967 bear
+2026-09-30 09:25:01 candle 2026-09-30 09:20 O 156.967 H 156.9835 L 156.9335 C 156.94 bear
+2026-09-30 09:30:02 candle 2026-09-30 09:25 O 156.94 H 156.94 L 156.866 C 156.8945 bear
+2026-09-30 09:30:02 EVENT {"type": "triggered", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 2, "candle_time_tehran": "2026-09-30 09:25", "candle_close_tehran": "2026-09-30 09:30", "candle_ts": 1790747700, "A": 157.157, "atr": 0.07379543, "entry": 156.91862045678477, "sl": 157.0365, "tp": [155.73982502463252], "fill_price": 156.91862045678477, "positions": [{"entry": 156.91862045678477, "sl": 157.0365, "tp": 155.73982502463252, "rr": 10.0}], "entries_so_far": 2, "notes": [], "emitted_at": "2026-09-30 09:30:02"}
+2026-09-30 09:30:02 EVENT {"type": "done", "symbol": "FOREXCOM:USDJPY", "side": "SELL", "tf": "5m", "leg": 2, "candle_time_tehran": "2026-09-30 09:25", "candle_close_tehran": "2026-09-30 09:30", "candle_ts": 1790747700, "A": 157.157, "atr": 0.07379543, "entry": 156.91862045678477, "sl": 157.0365, "tp": [155.73982502463252], "reason": "all 2 entries triggered", "total_positions": 2, "emitted_at": "2026-09-30 09:30:02"}
+2026-09-30 09:30:02 ENTRY 2 TRIGGERED at 156.91862045678477 (candle 2026-09-30 09:25)
+2026-09-30 09:30:02 FINISHED: ALL 2 ENTRIES TRIGGERED

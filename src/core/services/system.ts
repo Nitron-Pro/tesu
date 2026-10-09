@@ -27,4 +27,13 @@ export const SystemService = {
       window.close();
     }
   },
+
+  async startPythonEngine(): Promise<string> {
+    try {
+      return await invoke<string>("start_python_engine");
+    } catch (e) {
+      console.warn("startPythonEngine error or browser mode", e);
+      return String(e);
+    }
+  },
 };

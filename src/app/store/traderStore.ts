@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { SystemService } from "@/core/services/system";
 
 export interface AccountInfo {
   login: number;
@@ -182,6 +183,11 @@ export const useTraderStore = create<TraderState>((set, get) => ({
         } catch (e) {
           console.error("Failed to sync presets on open", e);
         }
+      };
+
+      socket.onerror = () => {
+        // Automatically attempt to start Python Engine if connection fails
+        SystemService.startPythonEngine().catch(() => {});
       };
 
       socket.onmessage = (event) => {

@@ -27,7 +27,8 @@ export function App() {
   const { connectEngine } = useTraderStore();
 
   useEffect(() => {
-    // Connect to Python Trading Engine
+    // 0. Auto start Python Engine if needed and connect WebSocket
+    SystemService.startPythonEngine().catch(() => {});
     connectEngine();
 
     // 1. Check if version was recently upgraded -> auto-open What's New modal!

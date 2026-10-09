@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTraderStore, BotInstance } from "@/app/store/traderStore";
+import { SystemService } from "@/core/services/system";
 import { 
   Play, 
   Square, 
@@ -179,6 +180,27 @@ export function TraderDashboard() {
 
   return (
     <div className="flex-1 flex flex-col p-6 overflow-y-auto space-y-6">
+      {/* Engine Disconnected Banner */}
+      {!isEngineConnected && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex items-center justify-between text-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5 text-amber-500 font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>
+              موتور محاسباتی و پل ارتباطی متاتریدر ۵ (پایتون) در حال راه‌اندازی است یا وصل نشده است.
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              SystemService.startPythonEngine();
+              useTraderStore.getState().connectEngine();
+            }}
+            className="px-3 py-1.5 bg-amber-500 text-black font-semibold rounded-lg hover:bg-amber-400 transition-colors cursor-pointer shrink-0 mr-2"
+          >
+            راه‌اندازی فوری موتور
+          </button>
+        </div>
+      )}
+
       {/* Top Status & Account Strip */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* MT5 Status Card */}

@@ -2,7 +2,7 @@ mod commands;
 
 use commands::serial::{list_serial_ports, send_serial_command};
 use commands::printer::{list_printers, print_raw_esc_pos};
-use commands::system::{exit_app, get_system_info};
+use commands::system::{exit_app, get_system_info, start_python_engine};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -78,6 +78,7 @@ pub fn run() {
             list_printers,
             print_raw_esc_pos,
             get_system_info,
+            start_python_engine,
             exit_app
         ])
         .run(tauri::generate_context!())

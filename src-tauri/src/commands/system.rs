@@ -21,20 +21,63 @@ pub fn get_system_info() -> Result<SystemInfo, String> {
 
 #[tauri::command]
 pub fn start_python_engine() -> Result<String, String> {
-    // Determine path to engine/main.py
-    // Priority:
-    // 1. Current working directory / engine / main.py
-    // 2. Relative to executable directory / engine / main.py
+    #[cfg(target_os = "windows")]
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
     let current_dir = std::env::current_dir().unwrap_or_default();
-    let candidate1 = current_dir.join("engine").join("main.py");
-    
     let exe_dir = std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|p| p.to_path_buf()))
         .unwrap_or_default();
+    let exe_parent = exe_dir.parent().unwrap_or(&exe_dir);
+
+    // 1. Check for Standalone Engine Executable (engine.exe or tesu_engine.exe)
+    // Priority order:
+    // a. exe_dir/engine.exe
+    // b. exe_dir/engine/engine.exe
+    // c. current_dir/engine.exe
+    // d. current_dir/engine/engine.exe
+    // e. exe_parent/engine.exe
+    let engine_exe_candidates = vec![
+        exe_dir.join("engine.exe"),
+        exe_dir.join("engine").join("engine.exe"),
+        exe_dir.join("bin").join("engine").join("engine.exe"),
+        exe_dir.join("tesu_engine.exe"),
+        current_dir.join("engine.exe"),
+        current_dir.join("engine").join("engine.exe"),
+        current_dir.join("src-tauri").join("bin").join("engine").join("engine.exe"),
+        exe_parent.join("engine.exe"),
+        exe_parent.join("engine").join("engine.exe"),
+        exe_parent.join("bin").join("engine").join("engine.exe"),
+    ];
+
+    for exe_path in engine_exe_candidates {
+        if exe_path.exists() {
+            let working_dir = exe_path.parent().unwrap_or(&current_dir);
+            let mut cmd = Command::new(&exe_path);
+            cmd.current_dir(working_dir);
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            match cmd.spawn() {
+                Ok(child) => {
+                    return Ok(format!(
+                        "Standalone engine launched: {:?} (PID: {})",
+                        exe_path,
+                        child.id()
+                    ));
+                }
+                Err(e) => {
+                    eprintln!("Failed to spawn standalone engine {:?}: {}", exe_path, e);
+                }
+            }
+        }
+    }
+
+    // 2. Fallback to Python scripts (for development or systems with Python installed)
+    let candidate1 = current_dir.join("engine").join("main.py");
     let candidate2 = exe_dir.join("engine").join("main.py");
-    // Also if exe is in build_output or target/release, check parent dirs
-    let candidate3 = exe_dir.parent().unwrap_or(&exe_dir).join("engine").join("main.py");
+    let candidate3 = exe_parent.join("engine").join("main.py");
 
     let script_path = if candidate1.exists() {
         candidate1
@@ -47,9 +90,6 @@ pub fn start_python_engine() -> Result<String, String> {
     };
 
     let working_dir = script_path.parent().unwrap_or(&current_dir);
-
-    #[cfg(target_os = "windows")]
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
 
     // Check if python is already running engine/main.py or port 9182 is listening
     // We can spawn pythonw (windowless) or python with CREATE_NO_WINDOW

@@ -24,7 +24,7 @@ export function App() {
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const { t } = useSettingsStore();
   const { checkDailyUpdateIfNeeded, checkChangelogOnStartup } = useUpdaterStore();
-  const { connectEngine } = useTraderStore();
+  const { connectEngine, isMt5Connected, account, activeTerminalName, activeAccountLabel } = useTraderStore();
 
   useEffect(() => {
     // 0. Auto start Python Engine if needed and connect WebSocket
@@ -88,10 +88,40 @@ export function App() {
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-background">
           {/* Header Strip */}
           <div className="h-10 border-b border-border/80 px-4 flex items-center justify-between bg-card/20 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-              <span className="text-foreground/80 font-medium">{t("workspace")}</span>
-              <span>&gt;</span>
-              <span className="text-primary">{currentPath}</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                <span className="text-foreground/80 font-medium">{t("workspace")}</span>
+                <span>&gt;</span>
+                <span className="text-primary">{currentPath}</span>
+              </div>
+
+              {/* Active MT5 Terminal & Account Pill */}
+              <div 
+                onClick={() => setCurrentPath("/accounts")}
+                className={`cursor-pointer flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-mono border transition-all ${
+                  isMt5Connected
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                    : "bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
+                }`}
+                title="کلیک برای رفتن به صفحه مدیریت پایانه‌ها و حساب‌ها"
+              >
+                {isMt5Connected ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-sans font-bold text-[11px]">
+                      {activeTerminalName || account?.company || "متاتریدر ۵"}
+                    </span>
+                    <span className="text-[10px] opacity-75 dir-ltr">
+                      #{account?.login || "Active"} {activeAccountLabel ? `(${activeAccountLabel})` : ""}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span className="font-sans text-[11px]">MT5 غیرمتصل</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Header Right / Left Actions */}

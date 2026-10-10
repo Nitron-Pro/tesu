@@ -6,6 +6,7 @@ dist-ssr/
 
 # Tauri & Rust build artifacts
 src-tauri/target/
+src-tauri/bin/
 local_data/
 
 # Python
@@ -19,3 +20,7 @@ venv/
 .DS_Store
 Thumbs.db
 *.log
+
+# PyInstaller build artifacts
+build/
+*.spec

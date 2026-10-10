@@ -1,18 +1,18 @@
 {
   "version": "1.1.0",
-  "notes": "Added Smart Updater engine, automatic background downloads, daily checks, and enhanced UI components.",
-  "pub_date": "2026-09-19T14:00:00Z",
+  "notes": "Multi-terminal accounts manager, standalone engine packaging, header active terminal indicator.",
+  "pub_date": "2026-10-10T16:00:00Z",
   "platforms": {
     "windows-x86_64": {
       "signature": "",
-      "url": "http://localhost:1420/updates/nora_1.1.0_x64_en-US.msi.zip"
+      "url": "https://app.nitron.pro/tesu/releas/Tesu_Trader_1.1.0_Setup.exe"
     }
   },
   "changelog": [
-    "New In-App Updater with background download and manual confirmation modes",
-    "Daily automated check mechanism with persistence in local storage",
-    "Automatic What's New changelog popup after software restart",
-    "Complete EN/FA RTL multilingual UI engine with local storage caching",
-    "Enhanced 3-level sidebar navigation with quick filter search"
+    "مدیریت چندگانه و همزمان ترمینال‌های متاتریدر ۵ و حساب‌های زیرمجموعه",
+    "توقف هوشمند و خودکار ربات‌ها هنگام سوئیچ حساب یا پایانه متاتریدر",
+    "باندل مستقل پایتون (Standalone Engine) بدون نیاز به نصب هیچ پیش‌نیاز روی ویندوز مقصد",
+    "نمایش زنده نام ترمینال و اکانت متصل در هدر و تایتل‌بار برنامه",
+    "انتقال سرور آپدیتر نرم‌افزار به دامین Nitron"
   ]
 }

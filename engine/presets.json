@@ -1,11 +1,12 @@
 [
   {
-    "id": "1791549400234",
-    "name": "طلا 40 دبل",
+    "id": "1791565375055",
+    "code": "XAU40M1R5",
+    "name": "طلا 1 دقیقه 40 آر 5",
     "symbol": "XAUUSD",
     "timeframe": "1m",
     "riskUsd": 40,
-    "rrRatio": 4,
+    "rrRatio": 5,
     "isDouble": true,
     "maxOpenPositions": 4,
     "martingaleEnabled": false,

@@ -128,7 +128,7 @@ tesu/
 ### اجرای مستقیم از فایل نصبی / پرتابل
 شما می‌توانید آخرین نسخه کامپایل‌شده را مستقیماً از بخش **[Releases](https://github.com/Nitron-Pro/tesu/releases)** دانلود و استفاده کنید:
 - **`Tesu_Trader.exe`**: نسخه بدون نیاز به نصب (Portable).
-- **`Tesu_Trader_1.0.0_Setup.exe`**: اینستالر خودکار با ساخت شرتکات دسکتاپ.
+- **`Tesu_Trader_1.1.0_Setup.exe`**: اینستالر خودکار با ساخت شرتکات دسکتاپ و موتور بدون وابستگی (Standalone).
 
 ### اجرای محیط توسعه (Development)
 ```powershell

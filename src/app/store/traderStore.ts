@@ -123,6 +123,9 @@ interface TraderState {
   reportData: ReportData | null;
   isReportLoading: boolean;
 
+  activeTerminalName: string;
+  activeAccountLabel: string;
+  setActiveTerminalInfo: (terminalName: string, accountLabel: string) => void;
   connectEngine: () => void;
   fetchSymbols: () => void;
   fetchReport: (days?: number) => void;
@@ -164,6 +167,16 @@ export const useTraderStore = create<TraderState>((set, get) => ({
   isDouble: false,
   reportData: null,
   isReportLoading: false,
+  activeTerminalName: localStorage.getItem("tesu_active_terminal_name") || "",
+  activeAccountLabel: localStorage.getItem("tesu_active_account_label") || "",
+
+  setActiveTerminalInfo: (terminalName: string, accountLabel: string) => {
+    try {
+      localStorage.setItem("tesu_active_terminal_name", terminalName);
+      localStorage.setItem("tesu_active_account_label", accountLabel);
+    } catch (e) {}
+    set({ activeTerminalName: terminalName, activeAccountLabel: accountLabel });
+  },
 
   connectEngine: () => {
     const existing = get().ws;
@@ -186,7 +199,7 @@ export const useTraderStore = create<TraderState>((set, get) => ({
       };
 
       socket.onerror = () => {
-        // Automatically attempt to start Python Engine if connection fails
+        // Automatically attempt to start Standalone Engine / Python Engine if connection fails
         SystemService.startPythonEngine().catch(() => {});
       };
 

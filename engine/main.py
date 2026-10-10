@@ -282,6 +282,34 @@ class TesuManager:
 
     async def dispatch_command(self, cmd: str, data: Dict[str, Any], sender: Any):
         if cmd == "CONNECT_MT5":
+            # Rule: When switching terminals/accounts, stop and cancel all active bots first
+            active_bot_ids = list(self.bots.keys())
+            if active_bot_ids:
+                logger.info(f"Switching MT5 connection: Stopping {len(active_bot_ids)} active bot(s)...")
+                for b_id in active_bot_ids:
+                    b = self.bots[b_id]
+                    b.state = "CANCELLED"
+                    # Cancel pending orders if any
+                    tickets = b.pending_tickets if b.pending_tickets else ([b.pending_ticket] if b.pending_ticket else [])
+                    for t in tickets:
+                        if t and self.bridge.is_connected:
+                            self.bridge.cancel_order(t)
+                    b.pending_ticket = None
+                    b.pending_tickets = []
+                    # Archive bot
+                    serialized = self.serialize_bot(b)
+                    self.archived_bots[b_id] = serialized
+                    del self.bots[b_id]
+                    await self.broadcast({
+                        "type": "BOT_DELETED",
+                        "bot_id": b_id,
+                        "archived_bot": serialized
+                    })
+
+            # Disconnect current MT5 bridge if connected
+            if self.bridge.is_connected:
+                self.bridge.disconnect()
+
             path = data.get("path")
             login = data.get("login")
             pwd = data.get("password")

@@ -45,13 +45,13 @@ export interface AppConfig {
 export const APP_CONFIG: AppConfig = {
   appName: "Tesu Trader",
   appId: "com.tesu.trader",
-  version: "1.0.0",
-  coreVersion: "1.0.0",
+  version: "1.1.0",
+  coreVersion: "1.1.0",
   defaultLanguage: "fa",
   defaultTheme: "dark",
   enableTray: true,
-  enableUpdater: false,
-  updaterEndpoint: "http://localhost:8080/updates/releases.json",
+  enableUpdater: true,
+  updaterEndpoint: "https://app.nitron.pro/tesu/releas/releases.json",
   about: {
     developer: "Tesu Trading Systems",
     website: "https://tesu.local",

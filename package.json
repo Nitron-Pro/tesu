@@ -1,13 +1,15 @@
 {
   "name": "nora",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:engine": "pyinstaller --noconfirm --clean --distpath src-tauri/bin/engine engine.spec",
+    "build:all": "npm run build:engine && npm run build && tauri build && powershell -ExecutionPolicy Bypass -File ./scripts/copy-build-output.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

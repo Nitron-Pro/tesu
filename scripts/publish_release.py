@@ -110,6 +110,22 @@ def create_github_release():
         ("build_output/Tesu_Trader_1.1.0.msi", "application/x-msi"),
     ]
 
+    target_filenames = {os.path.basename(f[0]) for f in files_to_upload}
+
+    # Delete any unneeded asset on GitHub release (like engine.exe or old zip)
+    for asset in rel_data.get("assets", []):
+        a_name = asset["name"]
+        a_id = asset["id"]
+        if a_name not in target_filenames:
+            print(f"Purging extra obsolete asset {a_name} (ID: {a_id}) from release...")
+            del_url = f"https://api.github.com/repos/{repo}/releases/assets/{a_id}"
+            del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
+            try:
+                urllib.request.urlopen(del_req)
+                print(f"Successfully purged extra asset: {a_name}")
+            except Exception as ex:
+                print(f"Warning: Failed to purge {a_name}: {ex}")
+
     for file_path, content_type in files_to_upload:
         if not os.path.exists(file_path):
             print(f"File not found: {file_path}")

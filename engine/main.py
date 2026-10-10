@@ -752,4 +752,16 @@ async def main():
     )
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except OSError as e:
+        # Check if port is already in use by an existing instance (WinError 10048)
+        if getattr(e, 'winerror', None) == 10048 or getattr(e, 'errno', None) == 10048:
+            logger.warning(f"Engine is already running on port {WS_PORT}. Exiting gracefully.")
+            sys.exit(0)
+        else:
+            logger.critical(f"Unhandled OS error: {e}", exc_info=True)
+            sys.exit(1)
+    except Exception as e:
+        logger.critical(f"Fatal error in engine: {e}", exc_info=True)
+        sys.exit(1)

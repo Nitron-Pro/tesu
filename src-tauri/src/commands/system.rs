@@ -21,6 +21,14 @@ pub fn get_system_info() -> Result<SystemInfo, String> {
 
 #[tauri::command]
 pub fn start_python_engine() -> Result<String, String> {
+    // 0. Check if engine is ALREADY running on port 9182
+    if let Ok(_) = std::net::TcpStream::connect_timeout(
+        &"127.0.0.1:9182".parse().unwrap(),
+        std::time::Duration::from_millis(150),
+    ) {
+        return Ok("Engine is already active and responding on port 9182".to_string());
+    }
+
     #[cfg(target_os = "windows")]
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 

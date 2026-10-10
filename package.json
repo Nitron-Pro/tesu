@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "build:engine": "pyinstaller --noconfirm --clean --distpath src-tauri/bin/engine engine.spec",
-    "build:all": "npm run build:engine && npm run build && tauri build && powershell -ExecutionPolicy Bypass -File ./scripts/copy-build-output.ps1"
+    "build:all": "npm run build:engine && npm run build && tauri build && powershell -ExecutionPolicy Bypass -File ./scripts/copy-build-output.ps1",
+    "publish:release": "python ./scripts/publish_release.py"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

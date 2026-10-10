@@ -122,6 +122,7 @@ interface TraderState {
   isDouble: boolean;
   reportData: ReportData | null;
   isReportLoading: boolean;
+  mt5ConnectionError: string | null;
 
   activeTerminalName: string;
   activeAccountLabel: string;
@@ -167,6 +168,7 @@ export const useTraderStore = create<TraderState>((set, get) => ({
   isDouble: false,
   reportData: null,
   isReportLoading: false,
+  mt5ConnectionError: null,
   activeTerminalName: localStorage.getItem("tesu_active_terminal_name") || "",
   activeAccountLabel: localStorage.getItem("tesu_active_account_label") || "",
 
@@ -220,7 +222,11 @@ export const useTraderStore = create<TraderState>((set, get) => ({
               isMt5Connected: msg.connected,
               account: msg.account,
               symbols: msg.symbols || [],
+              mt5ConnectionError: msg.error || null,
             });
+            if (!msg.connected && msg.error) {
+              alert(`خطای اتصال به متاتریدر:\n${msg.error}`);
+            }
           } else if (msg.type === "SYMBOLS_DATA") {
             set({ symbols: msg.symbols || [] });
           } else if (msg.type === "POSITIONS_UPDATE") {

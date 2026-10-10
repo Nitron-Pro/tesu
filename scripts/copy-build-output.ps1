@@ -23,11 +23,13 @@ if ($msiFile) {
     Write-Host "Copied MSI package -> $OutputDir\Tesu_Trader_1.1.0.msi"
 }
 
-# 3. Copy Portable Executable
+# 3. Copy Single-File Portable Executable
 $rawExe = "$releaseDir\nora.exe"
 if (Test-Path $rawExe) {
     Copy-Item $rawExe -Destination "$OutputDir\Tesu_Trader.exe" -Force
-    Write-Host "Copied Portable executable -> $OutputDir\Tesu_Trader.exe"
+    Write-Host "Copied True Single-File Portable executable -> $OutputDir\Tesu_Trader.exe"
 }
+
+Write-Host "All build outputs synchronized successfully to $OutputDir"
 
 Write-Host "All build outputs synchronized successfully to $OutputDir"

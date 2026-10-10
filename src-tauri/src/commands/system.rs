@@ -38,7 +38,7 @@ pub fn start_python_engine() -> Result<String, String> {
     // c. current_dir/engine.exe
     // d. current_dir/engine/engine.exe
     // e. exe_parent/engine.exe
-    let engine_exe_candidates = vec![
+    let mut engine_exe_candidates = vec![
         exe_dir.join("engine.exe"),
         exe_dir.join("engine").join("engine.exe"),
         exe_dir.join("bin").join("engine").join("engine.exe"),
@@ -50,6 +50,40 @@ pub fn start_python_engine() -> Result<String, String> {
         exe_parent.join("engine").join("engine.exe"),
         exe_parent.join("bin").join("engine").join("engine.exe"),
     ];
+
+    // Embedded Engine Extraction (True Single-File Portable Support)
+    // If no standalone engine is found alongside the exe, extract the embedded binary to %LOCALAPPDATA%/Tesu/engine/
+    const EMBEDDED_ENGINE_BYTES: &[u8] = include_bytes!("../../../src-tauri/bin/engine/engine.exe");
+    let mut extracted_engine_path: Option<std::path::PathBuf> = None;
+
+    if !EMBEDDED_ENGINE_BYTES.is_empty() {
+        let app_data_dir = std::env::var("LOCALAPPDATA")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| current_dir.clone());
+        let target_dir = app_data_dir.join("Tesu").join("bin");
+        let target_engine_path = target_dir.join("engine.exe");
+
+        let should_extract = if !target_engine_path.exists() {
+            true
+        } else if let Ok(meta) = std::fs::metadata(&target_engine_path) {
+            meta.len() != EMBEDDED_ENGINE_BYTES.len() as u64
+        } else {
+            true
+        };
+
+        if should_extract {
+            let _ = std::fs::create_dir_all(&target_dir);
+            if std::fs::write(&target_engine_path, EMBEDDED_ENGINE_BYTES).is_ok() {
+                extracted_engine_path = Some(target_engine_path.clone());
+            }
+        } else {
+            extracted_engine_path = Some(target_engine_path.clone());
+        }
+    }
+
+    if let Some(extracted) = extracted_engine_path {
+        engine_exe_candidates.push(extracted);
+    }
 
     for exe_path in engine_exe_candidates {
         if exe_path.exists() {

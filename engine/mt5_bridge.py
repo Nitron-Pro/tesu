@@ -28,6 +28,7 @@ class MT5Bridge:
         self.password = password
         self.server = server
         self.is_connected = False
+        self.last_error_message: Optional[str] = None
         self._symbol_cache: Dict[str, Any] = {}
 
     def connect(self) -> bool:
@@ -43,16 +44,21 @@ class MT5Bridge:
             init_kwargs["server"] = self.server
 
         if not mt5.initialize(**init_kwargs):
-            logger.error(f"MT5 initialize failed, error code: {mt5.last_error()}")
+            err = mt5.last_error()
+            self.last_error_message = f"خطای راه‌اندازی متاتریدر (کد {err[0]}): {err[1]}"
+            logger.error(f"MT5 initialize failed: {self.last_error_message}")
             self.is_connected = False
             return False
 
         account_info = mt5.account_info()
         if account_info is None:
-            logger.error(f"Failed to get account info: {mt5.last_error()}")
+            err = mt5.last_error()
+            self.last_error_message = f"خطای ورود به حساب (کد {err[0]}): {err[1]}"
+            logger.error(f"Failed to get account info: {self.last_error_message}")
             self.is_connected = False
             return False
 
+        self.last_error_message = None
         self.is_connected = True
         logger.info(f"Connected to MT5 - Account: {account_info.login}, Server: {account_info.server}, Balance: {account_info.balance}")
         return True

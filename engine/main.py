@@ -318,11 +318,13 @@ class TesuManager:
             success = self.bridge.connect()
             summary = self.bridge.get_account_summary() if success else None
             symbols_list = self.bridge.get_all_symbols() if success else []
+            error_msg = self.bridge.last_error_message if not success else None
             await self.broadcast({
                 "type": "MT5_STATUS",
                 "connected": success,
                 "account": summary,
-                "symbols": symbols_list
+                "symbols": symbols_list,
+                "error": error_msg
             })
 
         elif cmd == "START_BOT":

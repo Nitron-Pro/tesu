@@ -54,7 +54,7 @@ const DEFAULT_PROFILES: TerminalProfile[] = [
 ];
 
 export function AccountsManager() {
-  const { isMt5Connected, account, connectMt5, bots } = useTraderStore();
+  const { isMt5Connected, account, connectMt5, bots, mt5ConnectionError } = useTraderStore();
 
   // Saved profiles
   const [terminals, setTerminals] = useState<TerminalProfile[]>(() => {
@@ -326,8 +326,13 @@ export function AccountsManager() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-6 text-muted-foreground text-xs">
-            برای فعال‌سازی و دریافت زنده بالانس، از لیست زیر روی دکمه «سوئیچ و اتصال» یکی از حساب‌ها کلیک کنید یا فرم اتصال مستقیم را تکمیل نمایید.
+          <div className="text-center py-6 text-muted-foreground text-xs space-y-2">
+            <div>برای فعال‌سازی و دریافت زنده بالانس، از لیست زیر روی دکمه «سوئیچ و اتصال» یکی از حساب‌ها کلیک کنید یا فرم اتصال مستقیم را تکمیل نمایید.</div>
+            {mt5ConnectionError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 font-medium text-xs max-w-xl mx-auto">
+                {mt5ConnectionError}
+              </div>
+            )}
           </div>
         )}
       </div>

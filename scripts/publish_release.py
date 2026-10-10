@@ -53,32 +53,52 @@ def create_github_release():
         "User-Agent": "Tesu-Release-Publisher"
     }
 
-    # 1. Create Release
-    create_url = f"https://api.github.com/repos/{repo}/releases"
-    payload = {
-        "tag_name": tag,
-        "name": title,
-        "body": body,
-        "draft": False,
-        "prerelease": False
-    }
-
-    req = urllib.request.Request(
-        create_url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST"
-    )
+    # 1. Check if Release already exists
+    get_rel_url = f"https://api.github.com/repos/{repo}/releases/tags/{tag}"
+    get_req = urllib.request.Request(get_rel_url, headers=headers)
+    rel_data = None
 
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(get_req) as resp:
             rel_data = json.loads(resp.read().decode("utf-8"))
-            print(f"Created release: {rel_data.get('html_url')}")
+            print(f"Existing release found: {rel_data.get('html_url')}")
             upload_url_template = rel_data.get("upload_url", "")
     except urllib.error.HTTPError as e:
-        err_msg = e.read().decode("utf-8")
-        print(f"Failed to create release: {e.code} - {err_msg}")
-        return
+        if e.code == 404:
+            pass
+        else:
+            print(f"Error checking release: {e.code}")
+
+    if not rel_data:
+        # Create Release
+        create_url = f"https://api.github.com/repos/{repo}/releases"
+        payload = {
+            "tag_name": tag,
+            "name": title,
+            "body": body,
+            "draft": False,
+            "prerelease": False
+        }
+
+        req = urllib.request.Request(
+            create_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST"
+        )
+
+        try:
+            with urllib.request.urlopen(req) as resp:
+                rel_data = json.loads(resp.read().decode("utf-8"))
+                print(f"Created release: {rel_data.get('html_url')}")
+                upload_url_template = rel_data.get("upload_url", "")
+        except urllib.error.HTTPError as e:
+            err_msg = e.read().decode("utf-8")
+            print(f"Failed to create release: {e.code} - {err_msg}")
+            return
+
+    # Delete existing assets if they have the same name before uploading
+    existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
 
     # Base upload URL (strip {?name,label})
     base_upload_url = upload_url_template.split("{")[0]
@@ -96,6 +116,16 @@ def create_github_release():
             continue
 
         filename = os.path.basename(file_path)
+        if filename in existing_assets:
+            asset_id = existing_assets[filename]
+            print(f"Deleting existing asset {filename} (ID: {asset_id})...")
+            del_url = f"https://api.github.com/repos/{repo}/releases/assets/{asset_id}"
+            del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
+            try:
+                urllib.request.urlopen(del_req)
+            except Exception as ex:
+                print(f"Warning: Failed to delete {filename}: {ex}")
+
         print(f"Uploading asset: {filename}...")
         url = f"{base_upload_url}?name={urllib.parse.quote(filename)}"
 
@@ -110,12 +140,21 @@ def create_github_release():
         }
 
         up_req = urllib.request.Request(url, data=file_data, headers=up_headers, method="POST")
-        try:
-            with urllib.request.urlopen(up_req) as up_resp:
-                res = json.loads(up_resp.read().decode("utf-8"))
-                print(f"Successfully uploaded: {filename} ({res.get('browser_download_url')})")
-        except urllib.error.HTTPError as e:
-            print(f"Failed to upload {filename}: {e.code} - {e.read().decode('utf-8')}")
+        for attempt in range(1, 4):
+            try:
+                with urllib.request.urlopen(up_req, timeout=180) as up_resp:
+                    res = json.loads(up_resp.read().decode("utf-8"))
+                    print(f"Successfully uploaded: {filename} ({res.get('browser_download_url')})")
+                    break
+            except urllib.error.HTTPError as e:
+                print(f"Failed to upload {filename}: {e.code} - {e.read().decode('utf-8')}")
+                break
+            except Exception as e:
+                print(f"Attempt {attempt} failed to upload {filename}: {e}")
+                if attempt == 3:
+                    print(f"Giving up on {filename}")
+                import time
+                time.sleep(3)
 
 if __name__ == "__main__":
     create_github_release()

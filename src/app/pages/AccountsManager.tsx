@@ -155,6 +155,11 @@ export function AccountsManager() {
     e.stopPropagation();
     if (confirm("آیا از حذف این پایانه متاتریدر و تمام اکانت‌های آن اطمینان دارید؟")) {
       setTerminals((prev) => prev.filter((t) => t.id !== termId));
+      if (activeAccountKey && activeAccountKey.startsWith(`${termId}_`)) {
+        setActiveAccountKey(null);
+        localStorage.removeItem("tesu_active_account_key");
+        useTraderStore.getState().setActiveTerminalInfo("متاتریدر", "انتخاب نشده");
+      }
     }
   };
 
@@ -195,6 +200,12 @@ export function AccountsManager() {
 
   const handleDeleteAccount = (termId: string, accId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const key = `${termId}_${accId}`;
+    if (activeAccountKey === key) {
+      setActiveAccountKey(null);
+      localStorage.removeItem("tesu_active_account_key");
+      useTraderStore.getState().setActiveTerminalInfo("متاتریدر", "انتخاب نشده");
+    }
     setTerminals((prev) =>
       prev.map((t) => {
         if (t.id === termId) {
@@ -235,11 +246,12 @@ export function AccountsManager() {
 
   // Connect directly from bottom form
   const handleDirectConnect = () => {
+    let stopExistingBots = false;
     if (activeBotsCount > 0) {
       const confirmSwitch = confirm(
-        `هشدار: شما ${activeBotsCount} ربات فعال دارید!\nسوئیچ به پایانه جدید باعث توقف ربات‌های فعال جاری خواهد شد.\nآیا ادامه می‌دهید؟`
+        `توجه: در حال حاضر ${activeBotsCount} ربات فعال در حال اجرا هستند.\nآیا می‌خواهید ربات‌های فعال متوقف و بایگانی شوند؟\n(کلیک روی OK ربات‌ها را متوقف می‌کند؛ کلیک روی Cancel ربات‌ها را همچنان فعال نگه می‌دارد)`
       );
-      if (!confirmSwitch) return;
+      stopExistingBots = confirmSwitch;
     }
 
     setIsConnecting(true);
@@ -253,6 +265,7 @@ export function AccountsManager() {
       login: customLogin ? Number(customLogin) : undefined,
       password: customPassword || undefined,
       server: customServer.trim() || undefined,
+      stop_existing: stopExistingBots,
     });
     setTimeout(() => setIsConnecting(false), 2000);
   };

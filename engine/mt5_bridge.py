@@ -69,9 +69,20 @@ class MT5Bridge:
         self.is_connected = False
         self._symbol_cache.clear()
 
+    def check_connection(self) -> bool:
+        """Verifies if MT5 IPC is still alive without launching or opening any terminal."""
+        if not self.is_connected:
+            return False
+        info = mt5.terminal_info()
+        if info is None or not info.connected:
+            # Connection dropped or terminal closed
+            self.is_connected = False
+            return False
+        return True
+
     def get_account_summary(self) -> Optional[Dict[str, Any]]:
         """Returns balance, equity, margin, floating PnL."""
-        if not self.is_connected and not self.connect():
+        if not self.check_connection():
             return None
         info = mt5.account_info()
         if info is None:
@@ -92,7 +103,7 @@ class MT5Bridge:
 
     def get_all_symbols(self) -> List[Dict[str, Any]]:
         """Returns all available tradable symbols in the connected MT5 broker."""
-        if not self.is_connected and not self.connect():
+        if not self.check_connection():
             return []
         
         symbols = mt5.symbols_get()
@@ -381,7 +392,7 @@ class MT5Bridge:
 
     def get_all_open_positions(self) -> List[Dict[str, Any]]:
         """Returns all open positions with full details for UI dashboard."""
-        if not self.is_connected and not self.connect():
+        if not self.check_connection():
             return []
         positions = mt5.positions_get()
         if not positions:

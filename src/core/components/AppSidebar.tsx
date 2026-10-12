@@ -11,11 +11,6 @@ import {
   Archive,
   ChevronRight,
   Search,
-  Wallet,
-  Bot,
-  Send,
-  LineChart,
-  BarChart2,
   LucideIcon
 } from "lucide-react";
 import { APP_CONFIG, MenuItemLevel1, MenuItemLevel2 } from "@/app/config";
@@ -33,11 +28,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   CheckCircle2,
   Clock,
   Archive,
-  Wallet,
-  Bot,
-  Send,
-  LineChart,
-  BarChart2,
 };
 
 interface AppSidebarProps {

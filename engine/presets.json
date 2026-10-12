@@ -11,5 +11,18 @@
     "maxOpenPositions": 4,
     "martingaleEnabled": false,
     "martingaleStepPct": 10
+  },
+  {
+    "id": "1791760171269",
+    "code": "DOW5R10-40$",
+    "name": "dow 5 1-10 40",
+    "symbol": "DJIUSD",
+    "timeframe": "5m",
+    "riskUsd": 40,
+    "rrRatio": 10,
+    "isDouble": true,
+    "maxOpenPositions": 0,
+    "martingaleEnabled": false,
+    "martingaleStepPct": 10
   }
 ]

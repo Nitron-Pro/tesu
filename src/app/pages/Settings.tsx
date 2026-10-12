@@ -1,6 +1,6 @@
 import { useSettingsStore } from "@/core/store/settingsStore";
 import { useUpdaterStore } from "@/core/store/updaterStore";
-import { Moon, Globe, RefreshCw, Sparkles, Server, RotateCcw } from "lucide-react";
+import { Moon, Globe, RefreshCw, Server } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -15,8 +15,6 @@ export const Settings = () => {
     isChecking,
     lastCheckedTime,
     checkForUpdates,
-    simulateReleaseAvailable,
-    resetVersion,
   } = useUpdaterStore();
 
   return (
@@ -177,33 +175,6 @@ export const Settings = () => {
               <code className="text-[10px] font-mono bg-muted px-2 py-0.5 rounded text-foreground">
                 {APP_CONFIG.updaterEndpoint}
               </code>
-            </div>
-
-            {/* Developer Testing Bar for Updater Flow */}
-            <div className="p-3 rounded-xl bg-card border border-dashed border-border/80 space-y-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                Dev & Offline Testing Tools
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => simulateReleaseAvailable("1.1.0")}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-[11px] h-7"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-500" />
-                  <span>{t("testNewRelease")}</span>
-                </Button>
-                <Button
-                  onClick={resetVersion}
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-[11px] h-7 text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>{t("resetVersionSimulation")}</span>
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>

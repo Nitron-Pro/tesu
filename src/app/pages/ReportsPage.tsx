@@ -86,12 +86,13 @@ export function ReportsPage() {
     const values = equityPoints.map(p => p.equity);
     const minVal = Math.min(0, ...values);
     const maxVal = Math.max(1, ...values);
-    const range = (maxVal - minVal) || 1;
+    const range = (maxVal - minVal) === 0 ? 1 : (maxVal - minVal);
 
     const points = equityPoints.map((p, idx) => {
-      const x = (idx / (equityPoints.length - 1)) * (chartWidth - 20) + 10;
+      const divisor = equityPoints.length > 1 ? (equityPoints.length - 1) : 1;
+      const x = (idx / divisor) * (chartWidth - 20) + 10;
       const y = chartHeight - ((p.equity - minVal) / range) * (chartHeight - 30) - 15;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
+      return `${Number.isFinite(x) ? x.toFixed(1) : 0},${Number.isFinite(y) ? y.toFixed(1) : 0}`;
     });
 
     return `M ${points.join(" L ")}`;
@@ -115,7 +116,7 @@ export function ReportsPage() {
           {/* Days Filter */}
           <div className="flex items-center gap-1.5 bg-card border border-border p-1 rounded-xl text-xs">
             <Calendar className="w-3.5 h-3.5 text-muted-foreground ms-1" />
-            {[7, 14, 30, 90].map((d) => (
+            {[1, 7, 14, 30, 90].map((d) => (
               <button
                 key={d}
                 onClick={() => setDays(d)}
@@ -125,7 +126,7 @@ export function ReportsPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {d === 7 ? "۷ روز" : d === 14 ? "۱۴ روز" : d === 30 ? "۳۰ روز" : "۳ ماه"}
+                {d === 1 ? "امروز (۱ روز)" : d === 7 ? "۷ روز" : d === 14 ? "۱۴ روز" : d === 30 ? "۳۰ روز" : "۳ ماه"}
               </button>
             ))}
           </div>

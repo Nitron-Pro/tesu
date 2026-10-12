@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { SystemService } from "@/core/services/system";
 
 export interface AccountInfo {
   login: number;
@@ -150,7 +149,7 @@ interface TraderState {
   stopBot: (botId: string) => void;
   deleteBot: (botId: string) => void;
   closeAllBotTrades: (botId: string) => void;
-  connectMt5: (credentials: { path?: string; login?: number; password?: string; server?: string }) => void;
+  connectMt5: (credentials: { path?: string; login?: number; password?: string; server?: string; stop_existing?: boolean }) => void;
 }
 
 export const useTraderStore = create<TraderState>((set, get) => ({
@@ -202,7 +201,9 @@ export const useTraderStore = create<TraderState>((set, get) => ({
 
       socket.onerror = () => {
         // Automatically attempt to start Standalone Engine / Python Engine if connection fails
-        SystemService.startPythonEngine().catch(() => {});
+        import("@/app/services/engineLauncher").then(({ EngineLauncher }) => {
+          EngineLauncher.start().catch(() => {});
+        });
       };
 
       socket.onmessage = (event) => {
@@ -357,6 +358,10 @@ export const useTraderStore = create<TraderState>((set, get) => ({
   },
 
   clearArchivedBot: (botId: string) => {
+    const ws = get().ws;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ action: "CLEAR_ARCHIVED_BOT", bot_id: botId }));
+    }
     set((state) => {
       const updated = { ...state.archivedBots };
       delete updated[botId];

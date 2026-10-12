@@ -27,7 +27,7 @@ class TesuManager:
     def __init__(self):
         self.bridge = MT5Bridge()
         self.bots: Dict[str, PullbackStrategyInstance] = {}
-        self.archived_bots: Dict[str, Dict[str, Any]] = {}
+        self.archived_bots: Dict[str, Dict[str, Any]] = self.load_persisted_archive()
         self.connected_clients: Set[Any] = set()
         self.running = True
         self.accounts_config: list = []
@@ -39,6 +39,90 @@ class TesuManager:
             chat_id=os.environ.get("TELEGRAM_CHAT_ID", ""),
             on_command_callback=self.handle_external_command
         )
+
+    def load_persisted_archive(self) -> Dict[str, Dict[str, Any]]:
+        """Loads archived bots from local json file so history persists across app restarts / power outages."""
+        archive_file = os.path.join(os.path.dirname(__file__), "archived_bots.json")
+        if os.path.exists(archive_file):
+            try:
+                with open(archive_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading persisted archived_bots: {e}")
+        return {}
+
+    def save_persisted_archive(self):
+        """Saves archived bots dictionary to disk."""
+        archive_file = os.path.join(os.path.dirname(__file__), "archived_bots.json")
+        try:
+            with open(archive_file, "w", encoding="utf-8") as f:
+                json.dump(self.archived_bots, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving persisted archived_bots: {e}")
+
+    def sync_archived_bots_performance(self):
+        """
+        Updates trade stats for all archived bots by checking MT5 history deals.
+        Even if the app was closed or power went down, once MT5 reconnects,
+        any positions that closed are automatically added to that bot's stats.
+        """
+        if not self.bridge.is_connected or not self.archived_bots:
+            return
+
+        now_dt = datetime.datetime.now()
+        deals = self.bridge.get_history_deals(now_dt - datetime.timedelta(days=30), now_dt + datetime.timedelta(days=1))
+        if not deals:
+            return
+
+        changed = False
+        for bot_id, bot_data in self.archived_bots.items():
+            magic = bot_data.get("magic")
+            if not magic:
+                continue
+
+            bot_deals = [d for d in deals if getattr(d, 'magic', 0) == magic and getattr(d, 'entry', 0) == 1]
+            if not bot_deals:
+                continue
+
+            bot_deals_sorted = sorted(bot_deals, key=lambda x: x.time)
+            equity_curve = [0.0]
+            cumulative = 0.0
+            deals_list = []
+            for d in bot_deals_sorted:
+                pnl = float(d.profit) + float(d.commission or 0.0) + float(d.swap or 0.0)
+                cumulative = round(cumulative + pnl, 2)
+                equity_curve.append(cumulative)
+                deals_list.append({
+                    "ticket": d.ticket,
+                    "time": datetime.datetime.fromtimestamp(d.time).strftime("%H:%M:%S"),
+                    "symbol": d.symbol,
+                    "profit": round(float(d.profit), 2),
+                    "commission": round(float(d.commission or 0.0), 2),
+                    "net_pnl": round(pnl, 2),
+                    "volume": float(d.volume)
+                })
+
+            total_pnl = round(cumulative, 2)
+            wins = sum(1 for d in bot_deals if float(d.profit) > 0)
+            losses = sum(1 for d in bot_deals if float(d.profit) < 0)
+
+            # Check open positions remaining
+            open_pos = self.bridge.get_open_positions_by_magic(magic)
+            bot_data["open_positions_count"] = len(open_pos)
+
+            bot_data["performance"] = {
+                "trades_count": len(bot_deals),
+                "wins": wins,
+                "losses": losses,
+                "win_rate": round((wins / len(bot_deals) * 100), 1) if bot_deals else 0.0,
+                "total_pnl": total_pnl,
+                "equity_curve": equity_curve,
+                "deals": deals_list
+            }
+            changed = True
+
+        if changed:
+            self.save_persisted_archive()
 
     async def handle_external_command(self, data: Dict[str, Any]) -> Any:
         action = data.get("action")
@@ -147,6 +231,9 @@ class TesuManager:
         self.connected_clients.add(websocket)
         logger.info(f"Frontend client connected: {websocket.remote_address}")
         try:
+            # Sync any newly closed deals into archived bots before sending initial state
+            self.sync_archived_bots_performance()
+
             # Send initial state
             symbols_list = self.bridge.get_all_symbols() if self.bridge.is_connected else []
             open_pos = self.bridge.get_all_open_positions() if self.bridge.is_connected else []
@@ -210,13 +297,13 @@ class TesuManager:
         magic = bot.config.get("magic", self.magic_base)
         open_pos = self.bridge.get_open_positions_by_magic(magic) if self.bridge.is_connected else []
         
-        # Calculate bot performance strictly from deals that belong to this bot's lifetime and magic
-        start_time = bot.start_time if hasattr(bot, "start_time") else (datetime.datetime.now() - datetime.timedelta(days=1))
+        # Calculate bot performance strictly from deals that belong to this bot's magic number
+        # Fetching deals up to 7 days back ensures all trades done by this bot instance are fully captured
         now_dt = datetime.datetime.now()
-        deals = self.bridge.get_history_deals(start_time - datetime.timedelta(minutes=5), now_dt + datetime.timedelta(days=1)) if self.bridge.is_connected else []
+        deals = self.bridge.get_history_deals(now_dt - datetime.timedelta(days=7), now_dt + datetime.timedelta(days=1)) if self.bridge.is_connected else []
         
         # Filter strictly by this bot's unique magic number and exit deal (entry == 1)
-        bot_deals = [d for d in deals if d.magic == magic and d.entry == 1]
+        bot_deals = [d for d in deals if getattr(d, 'magic', 0) == magic and getattr(d, 'entry', 0) == 1]
         # Sort deals chronologically
         bot_deals_sorted = sorted(bot_deals, key=lambda x: x.time)
         
@@ -238,8 +325,8 @@ class TesuManager:
             })
         
         total_pnl = round(cumulative, 2)
-        wins = sum(1 for d in bot_deals if d.profit > 0)
-        losses = sum(1 for d in bot_deals if d.profit < 0)
+        wins = sum(1 for d in bot_deals if float(d.profit) > 0)
+        losses = sum(1 for d in bot_deals if float(d.profit) < 0)
         
         return {
             "bot_id": bot.bot_id,
@@ -282,9 +369,9 @@ class TesuManager:
 
     async def dispatch_command(self, cmd: str, data: Dict[str, Any], sender: Any):
         if cmd == "CONNECT_MT5":
-            # Rule: When switching terminals/accounts, stop and cancel all active bots first
+            stop_existing = data.get("stop_existing", False)
             active_bot_ids = list(self.bots.keys())
-            if active_bot_ids:
+            if active_bot_ids and stop_existing:
                 logger.info(f"Switching MT5 connection: Stopping {len(active_bot_ids)} active bot(s)...")
                 for b_id in active_bot_ids:
                     b = self.bots[b_id]
@@ -299,6 +386,7 @@ class TesuManager:
                     # Archive bot
                     serialized = self.serialize_bot(b)
                     self.archived_bots[b_id] = serialized
+                    self.save_persisted_archive()
                     del self.bots[b_id]
                     await self.broadcast({
                         "type": "BOT_DELETED",
@@ -319,6 +407,8 @@ class TesuManager:
             summary = self.bridge.get_account_summary() if success else None
             symbols_list = self.bridge.get_all_symbols() if success else []
             error_msg = self.bridge.last_error_message if not success else None
+            if success:
+                self.sync_archived_bots_performance()
             await self.broadcast({
                 "type": "MT5_STATUS",
                 "connected": success,
@@ -353,6 +443,7 @@ class TesuManager:
                 # Snapshot bot before removal for archive
                 serialized = self.serialize_bot(bot)
                 self.archived_bots[bot_id] = serialized
+                self.save_persisted_archive()
                 
                 # Remove from active bots dictionary
                 del self.bots[bot_id]
@@ -372,6 +463,7 @@ class TesuManager:
                 self.bridge.close_all_bot_trades(magic)
                 serialized = self.serialize_bot(bot)
                 self.archived_bots[bot_id] = serialized
+                self.save_persisted_archive()
                 del self.bots[bot_id]
                 await self.broadcast({
                     "type": "BOT_DELETED",
@@ -425,6 +517,13 @@ class TesuManager:
                 "type": "POSITIONS_UPDATE",
                 "positions": open_pos
             }))
+
+        elif cmd == "CLEAR_ARCHIVED_BOT":
+            bot_id = data.get("bot_id")
+            if bot_id in self.archived_bots:
+                del self.archived_bots[bot_id]
+                self.save_persisted_archive()
+                logger.info(f"Cleared archived bot {bot_id} from disk storage.")
 
         elif cmd == "GET_REPORT":
             days = int(data.get("days", 30))
@@ -504,6 +603,10 @@ class TesuManager:
                             "type": "POSITIONS_UPDATE",
                             "positions": open_pos
                         })
+                    
+                    # Every ~10 seconds (20 loops), synchronize and refresh archived bots performance
+                    if loop_counter % 20 == 0:
+                        self.sync_archived_bots_performance()
 
                 if self.bridge.is_connected and self.bots:
 
@@ -739,8 +842,6 @@ class TesuManager:
 
 async def main():
     manager = TesuManager()
-    # Try initial auto-connect to currently open MT5
-    manager.bridge.connect()
 
     server = await websockets.serve(manager.handle_client, WS_HOST, WS_PORT)
     logger.info(f"Tesu Trading Engine WebSocket running on ws://{WS_HOST}:{WS_PORT}")

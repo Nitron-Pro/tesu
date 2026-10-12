@@ -24,3 +24,8 @@ Thumbs.db
 # PyInstaller build artifacts
 build/
 *.spec
+
+# Local runner & builder scripts
+local-build.bat
+local-build.ps1
+engine/archived_bots.json

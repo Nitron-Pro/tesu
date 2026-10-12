@@ -108,8 +108,8 @@ export const translations = {
     updateChannel: "Release Channel",
     stableChannel: "Stable (Local / Offline)",
     endpointLabel: "Update Server Endpoint",
-    testNewRelease: "Simulate New Release (v1.1.0)",
-    resetVersionSimulation: "Reset to v1.0.0",
+    testNewRelease: "Simulate New Release (v1.3.0)",
+    resetVersionSimulation: "Reset to v1.2.0",
 
     // About Dialog
     developer: "Developer",
@@ -228,8 +228,8 @@ export const translations = {
     updateChannel: "کانال انتشار",
     stableChannel: "پایدار (لوکال / آفلاین)",
     endpointLabel: "آدرس سرور مانیفست آپدیت",
-    testNewRelease: "شبیه‌سازی انتشار نسخه جدید (v1.1.0)",
-    resetVersionSimulation: "بازنشانی به v1.0.0",
+    testNewRelease: "شبیه‌سازی انتشار نسخه جدید (v1.3.0)",
+    resetVersionSimulation: "بازنشانی به v1.2.0",
 
     // About Dialog
     developer: "توسعه‌دهنده",

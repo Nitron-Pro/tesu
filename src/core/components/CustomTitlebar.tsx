@@ -5,7 +5,6 @@ import { APP_CONFIG } from "@/app/config";
 import { useSettingsStore } from "@/core/store/settingsStore";
 import { useUpdaterStore } from "@/core/store/updaterStore";
 import { SystemService } from "@/core/services/system";
-import { useTraderStore } from "@/app/store/traderStore";
 
 interface CustomTitlebarProps {
   onOpenSettings?: () => void;
@@ -16,7 +15,6 @@ export const CustomTitlebar = ({}: CustomTitlebarProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const { t } = useSettingsStore();
   const { currentVersion } = useUpdaterStore();
-  const { isMt5Connected, account, activeTerminalName, activeAccountLabel } = useTraderStore();
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -81,41 +79,15 @@ export const CustomTitlebar = ({}: CustomTitlebarProps) => {
     >
       {/* App Title & Dynamic Icon */}
       <div className="flex items-center gap-2 pointer-events-none">
-        <img 
-          src="/logo.png" 
-          alt="Tesu Logo" 
-          className="w-5 h-5 object-contain filter drop-shadow" 
-          onError={(e) => {
-            // fallback if not found
-            (e.currentTarget as HTMLElement).style.display = "none";
-          }}
-        />
+        <div className="w-4 h-4 rounded bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground shadow-sm">
+          N
+        </div>
         <span className="text-xs font-semibold tracking-wide">
           {APP_CONFIG.appName}
         </span>
         <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
           v{currentVersion}
         </span>
-
-        {/* Live Active Terminal Badge in Titlebar */}
-        <div className="flex items-center gap-1.5 ms-2 px-2 py-0.5 rounded-md border text-[11px] font-mono select-none">
-          {isMt5Connected ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-emerald-400 font-sans font-bold">
-                {activeTerminalName || account?.company || "متاتریدر ۵"}
-              </span>
-              <span className="text-muted-foreground dir-ltr">
-                #{account?.login || "Active"} {activeAccountLabel ? `(${activeAccountLabel})` : ""}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
-              <span className="text-muted-foreground font-sans">MT5 قطع ارتباط</span>
-            </>
-          )}
-        </div>
       </div>
 
       {/* Window Controls (Minimize, Maximize/Restore, Close) */}

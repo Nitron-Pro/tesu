@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTraderStore, BotInstance } from "@/app/store/traderStore";
-import { SystemService } from "@/core/services/system";
+import { EngineLauncher } from "@/app/services/engineLauncher";
 import { 
   Play, 
   Square, 
@@ -191,7 +191,7 @@ export function TraderDashboard() {
           </div>
           <button
             onClick={() => {
-              SystemService.startPythonEngine();
+              EngineLauncher.start();
               useTraderStore.getState().connectEngine();
             }}
             className="px-3 py-1.5 bg-amber-500 text-black font-semibold rounded-lg hover:bg-amber-400 transition-colors cursor-pointer shrink-0 mr-2"

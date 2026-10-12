@@ -174,9 +174,10 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   },
 
   /**
-   * For testing & demonstration of the release flow
+   * For testing & demonstration of the release flow (Only allowed in Development mode)
    */
   simulateReleaseAvailable: (simVersion = "1.1.0") => {
+    if (!import.meta.env.DEV) return;
     set({
       updateAvailable: true,
       availableVersion: simVersion,
@@ -191,6 +192,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   },
 
   resetVersion: () => {
+    if (!import.meta.env.DEV) return;
     localStorage.removeItem(STORAGE_SIM_VERSION);
     localStorage.removeItem(STORAGE_LAST_SEEN_VERSION);
     set({

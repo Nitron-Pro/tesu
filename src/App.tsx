@@ -15,6 +15,7 @@ import { Settings } from "@/app/pages/Settings";
 import { useSettingsStore } from "@/core/store/settingsStore";
 import { useUpdaterStore } from "@/core/store/updaterStore";
 import { useTraderStore } from "@/app/store/traderStore";
+import { EngineLauncher } from "@/app/services/engineLauncher";
 import { SystemService } from "@/core/services/system";
 
 export function App() {
@@ -28,7 +29,7 @@ export function App() {
 
   useEffect(() => {
     // 0. Auto start Python Engine if needed and connect WebSocket
-    SystemService.startPythonEngine().catch(() => {});
+    EngineLauncher.start().catch(() => {});
     connectEngine();
 
     // 1. Check if version was recently upgraded -> auto-open What's New modal!

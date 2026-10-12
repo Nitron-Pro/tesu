@@ -590,6 +590,21 @@ class TesuManager:
         while self.running:
             try:
                 loop_counter += 1
+                if not self.bridge.is_connected:
+                    # Check/reconnect periodically every 3 seconds (6 loops)
+                    if loop_counter % 6 == 0:
+                        if self.bridge.check_connection():
+                            logger.info("MT5 connection recovered successfully.")
+                            summary = self.bridge.get_account_summary()
+                            symbols_list = self.bridge.get_all_symbols()
+                            await self.broadcast({
+                                "type": "MT5_STATUS",
+                                "connected": True,
+                                "account": summary,
+                                "symbols": symbols_list,
+                                "error": None
+                            })
+
                 if self.bridge.is_connected:
                     # Account metrics update
                     account = self.bridge.get_account_summary()

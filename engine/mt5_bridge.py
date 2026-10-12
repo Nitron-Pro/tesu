@@ -70,15 +70,23 @@ class MT5Bridge:
         self._symbol_cache.clear()
 
     def check_connection(self) -> bool:
-        """Verifies if MT5 IPC is still alive without launching or opening any terminal."""
+        """Verifies if MT5 IPC is still alive and automatically attempts reconnection if internet or terminal dropped."""
         if not self.is_connected:
-            return False
-        info = mt5.terminal_info()
-        if info is None or not info.connected:
-            # Connection dropped or terminal closed
+            return self.connect()
+        try:
+            info = mt5.terminal_info()
+            if info is None or not info.connected:
+                logger.warning("MT5 terminal_info reported disconnected. Attempting auto-reconnect...")
+                # Re-initialize MT5 connection seamlessly
+                if self.connect():
+                    return True
+                self.is_connected = False
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error checking MT5 connection: {e}")
             self.is_connected = False
             return False
-        return True
 
     def get_account_summary(self) -> Optional[Dict[str, Any]]:
         """Returns balance, equity, margin, floating PnL."""

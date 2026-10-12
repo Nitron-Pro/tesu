@@ -23,6 +23,18 @@ logger = logging.getLogger("TesuServer")
 WS_HOST = "127.0.0.1"
 WS_PORT = 9182
 
+def get_storage_path(filename: str) -> str:
+    """Returns stable storage path in APPDATA (falling back to current dir) to ensure persistence across restarts."""
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        folder = os.path.join(appdata, "TesuTrader")
+        try:
+            os.makedirs(folder, exist_ok=True)
+            return os.path.join(folder, filename)
+        except Exception:
+            pass
+    return os.path.join(os.path.dirname(__file__), filename)
+
 class TesuManager:
     def __init__(self):
         self.bridge = MT5Bridge()
@@ -42,23 +54,116 @@ class TesuManager:
 
     def load_persisted_archive(self) -> Dict[str, Dict[str, Any]]:
         """Loads archived bots from local json file so history persists across app restarts / power outages."""
-        archive_file = os.path.join(os.path.dirname(__file__), "archived_bots.json")
-        if os.path.exists(archive_file):
+        archive_file = get_storage_path("archived_bots.json")
+        # Fallback check legacy location
+        legacy_file = os.path.join(os.path.dirname(__file__), "archived_bots.json")
+        
+        target_file = archive_file if os.path.exists(archive_file) else (legacy_file if os.path.exists(legacy_file) else None)
+        if target_file and os.path.exists(target_file):
             try:
-                with open(archive_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                with open(target_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    logger.info(f"Loaded {len(data)} archived bots from storage ({target_file})")
+                    return data
             except Exception as e:
                 logger.error(f"Error loading persisted archived_bots: {e}")
         return {}
 
     def save_persisted_archive(self):
         """Saves archived bots dictionary to disk."""
-        archive_file = os.path.join(os.path.dirname(__file__), "archived_bots.json")
+        archive_file = get_storage_path("archived_bots.json")
         try:
             with open(archive_file, "w", encoding="utf-8") as f:
                 json.dump(self.archived_bots, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"Error saving persisted archived_bots: {e}")
+
+    def auto_recover_bots_from_mt5_history(self):
+        """
+        Scans MT5 trading history (deals up to 30 days back) for any trades placed by Tesu bots
+        (matching magic number >= 88000 or comments starting with 'Tesu_').
+        If any bot is not already in archived_bots, creates a record for it so history & reports are never lost!
+        """
+        if not self.bridge.is_connected:
+            return
+
+        try:
+            now_dt = datetime.datetime.now()
+            from_dt = now_dt - datetime.timedelta(days=30)
+            deals = self.bridge.get_history_deals(from_dt, now_dt + datetime.timedelta(days=1))
+            if not deals:
+                return
+
+            recovered_count = 0
+            for d in deals:
+                magic = getattr(d, 'magic', 0)
+                comment = getattr(d, 'comment', '') or ''
+                
+                # Check if this deal belongs to Tesu
+                is_tesu = (magic >= 88000) or comment.startswith("Tesu_")
+                if not is_tesu:
+                    continue
+
+                # Determine bot id
+                target_bot_id = None
+                if comment.startswith("Tesu_"):
+                    # comment formats: Tesu_{bot_id} or Tesu_{bot_id}_1 or Tesu_{bot_id}_2
+                    parts = comment.split("_")
+                    if len(parts) >= 2:
+                        target_bot_id = f"{parts[0]}_{parts[1]}"
+                
+                if not target_bot_id:
+                    target_bot_id = f"recovered_bot_{magic}"
+
+                # If bot is neither in active bots nor archived bots, recover it into archive
+                if target_bot_id not in self.archived_bots and target_bot_id not in self.bots:
+                    # Deduce side from deal type or position
+                    sym = getattr(d, 'symbol', 'XAUUSD')
+                    self.archived_bots[target_bot_id] = {
+                        "bot_id": target_bot_id,
+                        "magic": magic,
+                        "symbol": sym,
+                        "side": "BUY" if getattr(d, 'type', 0) == 1 else "SELL", # exit deal 1 = SELL (closed BUY)
+                        "timeframe": "1m",
+                        "risk_usd": 10.0,
+                        "base_risk_usd": 10.0,
+                        "rr_ratio": 2.0,
+                        "is_double": False,
+                        "consecutive_losses": 0,
+                        "max_open_positions": 0,
+                        "martingale_enabled": False,
+                        "martingale_step_pct": 10.0,
+                        "stop_above_price": None,
+                        "stop_below_price": None,
+                        "stop_reason": "RECOVERED_FROM_MT5",
+                        "open_positions_count": 0,
+                        "state": "FINISHED",
+                        "A": None,
+                        "atr14": 0.0,
+                        "pending_entry": None,
+                        "pending_sl": None,
+                        "pending_tp": None,
+                        "pending_ticket": None,
+                        "pending_tickets": [],
+                        "position_ticket": None,
+                        "events": [{"time": datetime.datetime.fromtimestamp(d.time).strftime("%Y-%m-%d %H:%M:%S"), "event": "RECOVERED", "data": {"magic": magic}}],
+                        "performance": {
+                            "trades_count": 0,
+                            "wins": 0,
+                            "losses": 0,
+                            "win_rate": 0.0,
+                            "total_pnl": 0.0,
+                            "equity_curve": [0.0],
+                            "deals": []
+                        }
+                    }
+                    recovered_count += 1
+
+            if recovered_count > 0:
+                logger.info(f"Auto-recovered {recovered_count} historical bot(s) directly from MT5 deals history!")
+                self.save_persisted_archive()
+        except Exception as e:
+            logger.error(f"Error in auto_recover_bots_from_mt5_history: {e}")
 
     def sync_archived_bots_performance(self):
         """
@@ -231,7 +336,9 @@ class TesuManager:
         self.connected_clients.add(websocket)
         logger.info(f"Frontend client connected: {websocket.remote_address}")
         try:
-            # Sync any newly closed deals into archived bots before sending initial state
+            # Automatically recover any historical bots from MT5 deals & sync performance
+            if self.bridge.is_connected:
+                self.auto_recover_bots_from_mt5_history()
             self.sync_archived_bots_performance()
 
             # Send initial state
@@ -408,6 +515,7 @@ class TesuManager:
             symbols_list = self.bridge.get_all_symbols() if success else []
             error_msg = self.bridge.last_error_message if not success else None
             if success:
+                self.auto_recover_bots_from_mt5_history()
                 self.sync_archived_bots_performance()
             await self.broadcast({
                 "type": "MT5_STATUS",
@@ -548,6 +656,9 @@ class TesuManager:
             atr = calculate_atr14(candles)
             bot.on_start(candles[-1], atr)
             self.bots[bot_id] = bot
+            # Persist bot snapshot immediately so unexpected shutdowns don't lose its identity
+            self.archived_bots[bot_id] = self.serialize_bot(bot)
+            self.save_persisted_archive()
             logger.info(f"Bot {bot_id} started on {real_symbol} with A={bot.A}, ATR={atr}, Magic={data['magic']}")
             await self.broadcast({
                 "type": "BOT_STARTED",
@@ -621,6 +732,7 @@ class TesuManager:
                     
                     # Every ~10 seconds (20 loops), synchronize and refresh archived bots performance
                     if loop_counter % 20 == 0:
+                        self.auto_recover_bots_from_mt5_history()
                         self.sync_archived_bots_performance()
 
                 if self.bridge.is_connected and self.bots:

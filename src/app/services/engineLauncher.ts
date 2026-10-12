@@ -17,6 +17,8 @@ export const EngineLauncher = {
 
     // Try launching standalone engine executable via Nora's smart sidecar resolver
     const candidates = [
+      { command: "tesu_engine.exe", args: [] },
+      { command: "tesu_engine", args: [] },
       { command: "engine.exe", args: [] },
       { command: "engine", args: [] },
       { command: "pythonw", args: ["engine/main.py"] },

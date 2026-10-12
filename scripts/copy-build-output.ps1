@@ -35,6 +35,10 @@ $obsoleteEngine = "$OutputDir\engine.exe"
 if (Test-Path $obsoleteEngine) {
     Remove-Item $obsoleteEngine -Force -ErrorAction SilentlyContinue
 }
+$obsoleteTesuEngine = "$OutputDir\tesu_engine.exe"
+if (Test-Path $obsoleteTesuEngine) {
+    Remove-Item $obsoleteTesuEngine -Force -ErrorAction SilentlyContinue
+}
 $obsoleteZip = "$OutputDir\Tesu_Trader_1.1.0_Portable.zip"
 if (Test-Path $obsoleteZip) {
     Remove-Item $obsoleteZip -Force -ErrorAction SilentlyContinue

@@ -13,6 +13,8 @@ import os
 from typing import Dict, Any, Set, Optional
 import websockets
 
+import sys
+
 from mt5_bridge import MT5Bridge
 from pullback_engine import PullbackStrategyInstance, calculate_atr14
 from telegram_bot import TelegramNotifier
@@ -24,16 +26,19 @@ WS_HOST = "127.0.0.1"
 WS_PORT = 9182
 
 def get_storage_path(filename: str) -> str:
-    """Returns stable storage path in APPDATA (falling back to current dir) to ensure persistence across restarts."""
-    appdata = os.environ.get("APPDATA")
-    if appdata:
-        folder = os.path.join(appdata, "TesuTrader")
-        try:
-            os.makedirs(folder, exist_ok=True)
-            return os.path.join(folder, filename)
-        except Exception:
-            pass
-    return os.path.join(os.path.dirname(__file__), filename)
+    """
+    Returns the storage path next to the application/executable.
+    Handles:
+    1. Standalone PyInstaller frozen binary (sys.executable directory)
+    2. Embedded sidecar (extracted alongside main app or executable)
+    3. Normal python execution (project root or engine directory)
+    """
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    return os.path.join(base_dir, filename)
 
 class TesuManager:
     def __init__(self):
@@ -240,7 +245,7 @@ class TesuManager:
             preset_code = data.get("preset_code", "").upper().strip()
             side = data.get("side", "BUY").upper()
             # Find preset in saved presets
-            presets_file = os.path.join(os.path.dirname(__file__), "presets.json")
+            presets_file = get_storage_path("presets.json")
             if os.path.exists(presets_file):
                 try:
                     with open(presets_file, "r", encoding="utf-8") as f:
@@ -264,7 +269,7 @@ class TesuManager:
                     logger.error(f"Error loading preset {preset_code}: {e}")
             return f"❌ پریست با کد {preset_code} یافت نشد."
         elif action == "LIST_PRESETS":
-            presets_file = os.path.join(os.path.dirname(__file__), "presets.json")
+            presets_file = get_storage_path("presets.json")
             if os.path.exists(presets_file):
                 try:
                     with open(presets_file, "r", encoding="utf-8") as f:
@@ -611,7 +616,7 @@ class TesuManager:
 
         elif cmd == "SYNC_PRESETS":
             presets_list = data.get("presets", [])
-            presets_file = os.path.join(os.path.dirname(__file__), "presets.json")
+            presets_file = get_storage_path("presets.json")
             try:
                 with open(presets_file, "w", encoding="utf-8") as f:
                     json.dump(presets_list, f, ensure_ascii=False, indent=2)

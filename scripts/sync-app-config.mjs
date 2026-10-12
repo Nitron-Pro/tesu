@@ -86,6 +86,17 @@ function sync() {
     if (customBinFiles.length > 0) {
       if (!fs.existsSync(tauriBinDir)) {
         fs.mkdirSync(tauriBinDir, { recursive: true });
+      } else {
+        // Clean obsolete binaries from src-tauri/bin that no longer exist in customBinDir
+        const existingTauriBinFiles = fs.readdirSync(tauriBinDir);
+        for (const file of existingTauriBinFiles) {
+          if (!customBinFiles.includes(file)) {
+            try {
+              fs.rmSync(path.join(tauriBinDir, file), { recursive: true, force: true });
+              console.log(`[sync-app-config] Removed obsolete sidecar binary: ${file}`);
+            } catch (e) {}
+          }
+        }
       }
       for (const file of customBinFiles) {
         fs.copyFileSync(

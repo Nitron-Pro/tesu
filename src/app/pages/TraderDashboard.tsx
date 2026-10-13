@@ -685,11 +685,11 @@ export function TraderDashboard() {
             <p className="text-xs opacity-75 mt-1">Select symbol, side and start a pullback execution above</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {activeBotList.map((bot) => (
               <div
                 key={bot.bot_id}
-                className={`bg-card border rounded-lg px-3 py-2 shadow-sm space-y-1.5 transition-all ${
+                className={`bg-card border rounded-xl p-3.5 shadow-sm space-y-2.5 transition-all ${
                   bot.state === "CANCELLED"
                     ? "border-border/40 opacity-60"
                     : bot.state === "ORDER_FAILED"
@@ -698,21 +698,21 @@ export function TraderDashboard() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                      className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${
                         bot.side === "SELL" ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"
                       }`}
                     >
                       {bot.side}
                     </span>
-                    <span className="font-bold text-xs text-foreground truncate">{bot.symbol}</span>
-                    <span className="text-[10px] font-mono bg-muted px-1 py-0.5 rounded text-muted-foreground shrink-0">
+                    <span className="font-bold text-sm text-foreground truncate">{bot.symbol}</span>
+                    <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground shrink-0">
                       {bot.timeframe}
                     </span>
                   </div>
                   <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
                       bot.state === "WAITING_PULLBACK"
                         ? "bg-amber-500/10 text-amber-500 animate-pulse"
                         : bot.state === "PENDING_ACTIVE"
@@ -728,63 +728,77 @@ export function TraderDashboard() {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] font-mono text-muted-foreground">
-                  <span>A <b className="text-foreground">{bot.A?.toFixed(5) || "--"}</b></span>
-                  <span>ورود <b className="text-primary">{bot.pending_entry?.toFixed(5) || "--"}</b></span>
-                  <span>ریسک <b className="text-amber-500">${bot.risk_usd?.toFixed(0) || "0"}</b></span>
-                  <span>باز <b className="text-foreground">{bot.open_positions_count || 0}{bot.max_open_positions ? `/${bot.max_open_positions}` : ""}</b></span>
+                <div className="grid grid-cols-4 gap-2 bg-muted/30 rounded-lg p-2">
+                  <div className="min-w-0">
+                    <span className="block text-[11px] text-muted-foreground">نقطه A</span>
+                    <span className="block text-sm font-bold font-mono text-foreground truncate">{bot.A?.toFixed(5) || "--"}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[11px] text-muted-foreground">ورود</span>
+                    <span className="block text-sm font-bold font-mono text-primary truncate">{bot.pending_entry?.toFixed(5) || "--"}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[11px] text-muted-foreground">ریسک</span>
+                    <span className="block text-sm font-bold font-mono text-amber-500">${bot.risk_usd?.toFixed(0) || "0"}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[11px] text-muted-foreground">پوزیشن</span>
+                    <span className="block text-sm font-bold font-mono text-foreground">
+                      {bot.open_positions_count || 0}{bot.max_open_positions ? `/${bot.max_open_positions}` : ""}
+                    </span>
+                  </div>
                 </div>
 
                 {(bot.stop_above_price || bot.stop_below_price) && (
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     محدوده: {bot.stop_below_price ? `کف ${bot.stop_below_price}` : ""}{bot.stop_below_price && bot.stop_above_price ? " / " : ""}{bot.stop_above_price ? `سقف ${bot.stop_above_price}` : ""}
                   </p>
                 )}
                 {bot.last_error && (
-                  <p className="text-[10px] text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded leading-snug">
+                  <p className="text-xs text-rose-500 bg-rose-500/10 px-2 py-1 rounded leading-snug">
                     {bot.last_error}
                   </p>
                 )}
                 {bot.stop_reason && (
-                  <p className="text-[10px] text-rose-500">علت توقف: {bot.stop_reason}</p>
+                  <p className="text-xs text-rose-500">علت توقف: {bot.stop_reason}</p>
                 )}
 
-                <div className="flex items-center justify-end gap-1 pt-0.5">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => loadBotIntoLauncher(bot)}
-                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground cursor-pointer"
+                    className="flex-1 h-8 rounded-md bg-muted/70 hover:bg-muted text-foreground cursor-pointer flex items-center justify-center"
                     title="کپی تنظیمات به لانچر"
                   >
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => openLimitsEditor(bot)}
-                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground cursor-pointer"
+                    className="flex-1 h-8 rounded-md bg-muted/70 hover:bg-muted text-foreground cursor-pointer flex items-center justify-center"
                     title="تغییر محدوده توقف"
                   >
-                    <Settings2 className="w-3.5 h-3.5" />
+                    <Settings2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setSelectedBotForReport(bot)}
-                    className="p-1.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary cursor-pointer"
+                    className="flex-1 h-8 rounded-md bg-primary/10 hover:bg-primary/20 text-primary cursor-pointer flex items-center justify-center"
                     title="گزارش عملکرد"
                   >
-                    <BarChart2 className="w-3.5 h-3.5" />
+                    <BarChart2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => stopBot(bot.bot_id)}
                     disabled={bot.state === "CANCELLED"}
-                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground disabled:opacity-40 cursor-pointer"
+                    className="flex-1 h-8 rounded-md bg-muted/70 hover:bg-muted text-foreground disabled:opacity-40 cursor-pointer flex items-center justify-center"
                     title="توقف ربات"
                   >
-                    <Square className="w-3.5 h-3.5" />
+                    <Square className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => deleteBot(bot.bot_id)}
-                    className="p-1.5 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer"
+                    className="flex-1 h-8 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer flex items-center justify-center"
                     title="حذف و آرشیو"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

@@ -55,8 +55,9 @@ class PullbackStrategyInstance:
         self.current_leg: int = 1
 
         # State tracking
-        self.state: str = "WAITING_PULLBACK"  # WAITING_PULLBACK, PENDING_ACTIVE, POSITION_ACTIVE, FINISHED, CANCELLED
+        self.state: str = "WAITING_PULLBACK"  # WAITING_PULLBACK, PENDING_ACTIVE, POSITION_ACTIVE, ORDER_FAILED, FINISHED, CANCELLED
         self.stop_reason: Optional[str] = None
+        self.last_error: Optional[str] = None
         self.start_time: datetime.datetime = datetime.datetime.now()
         self.A: Optional[float] = None
         self.atr14: float = 0.0
@@ -224,7 +225,7 @@ class PullbackStrategyInstance:
                 return {"action": "NONE"}
 
             # 4. First white candle after pullback -> Place Sell Stop
-            if self.has_pullback and self.state == "WAITING_PULLBACK" and is_bull:
+            if self.has_pullback and self.state in ("WAITING_PULLBACK", "ORDER_FAILED") and is_bull:
                 entry = low - (0.1 * self.atr14)
                 # In SELL, stop is closed by ASK (Bid + Spread). So SL must cover High + spread.
                 sl = high + spread_price
@@ -322,7 +323,7 @@ class PullbackStrategyInstance:
 
             # 4. First red candle after pullback -> Place Buy Stop
             # In BUY, order triggers at Ask (High + Spread). SL is at Low.
-            if self.has_pullback and self.state == "WAITING_PULLBACK" and not is_bull:
+            if self.has_pullback and self.state in ("WAITING_PULLBACK", "ORDER_FAILED") and not is_bull:
                 entry = high + (0.1 * self.atr14) + spread_price
                 sl = low
                 risk_distance = entry - sl

@@ -177,6 +177,7 @@ class MT5Bridge:
             "volume_max": info.volume_max,
             "volume_step": info.volume_step,
             "trade_contract_size": info.trade_contract_size,
+            "trade_stops_level": int(getattr(info, "trade_stops_level", 0) or 0),
         }
         self._symbol_cache[symbol] = data
         self._symbol_cache[resolved] = data
@@ -278,22 +279,37 @@ class MT5Bridge:
             })
         return candles
 
-    def send_stop_order(
+    def get_tick(self, symbol: str) -> Optional[Dict[str, float]]:
+        """Returns current bid/ask for a symbol."""
+        resolved = self.resolve_symbol(symbol)
+        tick = mt5.symbol_info_tick(resolved)
+        if tick is None:
+            return None
+        return {"bid": float(tick.bid), "ask": float(tick.ask)}
+
+    def send_stop_order_result(
         self,
         symbol: str,
-        side: str,  # "BUY" or "SELL"
+        side: str,
         price: float,
         sl: float,
         tp: float,
         volume: float,
         magic: int,
         comment: str = "TesuBot"
-    ) -> Optional[int]:
-        """Places a BUY_STOP or SELL_STOP pending order."""
+    ) -> Dict[str, Any]:
+        """Places a BUY_STOP or SELL_STOP and returns ticket plus broker error details."""
         resolved = self.resolve_symbol(symbol)
         sym_info = self.get_symbol_info(resolved)
         if not sym_info:
-            return None
+            return {
+                "ok": False,
+                "ticket": None,
+                "retcode": None,
+                "comment": f"نماد {symbol} در متاتریدر پیدا نشد",
+                "is_invalid_price": False,
+                "price": price,
+            }
 
         digits = sym_info["digits"]
         order_type = mt5.ORDER_TYPE_BUY_STOP if side.upper() == "BUY" else mt5.ORDER_TYPE_SELL_STOP
@@ -315,11 +331,81 @@ class MT5Bridge:
 
         result = mt5.order_send(request)
         if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
-            logger.error(f"Order send failed ({side} STOP at {price}): {result.retcode if result else mt5.last_error()} - {result.comment if result else ''}")
-            return None
+            retcode = result.retcode if result else None
+            broker_comment = (result.comment if result else "") or ""
+            if not broker_comment:
+                err = mt5.last_error()
+                broker_comment = str(err[1] if err else "ارسال اردر ناموفق")
+            invalid_price = (
+                retcode == getattr(mt5, "TRADE_RETCODE_INVALID_PRICE", 10015)
+                or "invalid price" in broker_comment.lower()
+            )
+            logger.error(f"Order send failed ({side} STOP at {price}): {retcode} - {broker_comment}")
+            return {
+                "ok": False,
+                "ticket": None,
+                "retcode": retcode,
+                "comment": broker_comment,
+                "is_invalid_price": invalid_price,
+                "price": price,
+            }
 
         logger.info(f"Order placed successfully: Ticket #{result.order} | {side} STOP at {price} SL={sl} TP={tp} Vol={volume}")
-        return result.order
+        return {
+            "ok": True,
+            "ticket": result.order,
+            "retcode": result.retcode,
+            "comment": result.comment or "",
+            "is_invalid_price": False,
+            "price": price,
+        }
+
+    def send_stop_order(
+        self,
+        symbol: str,
+        side: str,
+        price: float,
+        sl: float,
+        tp: float,
+        volume: float,
+        magic: int,
+        comment: str = "TesuBot"
+    ) -> Optional[int]:
+        """Places a BUY_STOP or SELL_STOP pending order."""
+        return self.send_stop_order_result(symbol, side, price, sl, tp, volume, magic, comment).get("ticket")
+
+    def adjust_invalid_stop_price(
+        self,
+        symbol: str,
+        side: str,
+        price: float,
+        sl: float,
+        tp: float
+    ) -> Optional[Dict[str, float]]:
+        """Nudges a rejected stop price slightly farther from the market so MT5 accepts it."""
+        sym_info = self.get_symbol_info(symbol)
+        tick = self.get_tick(symbol)
+        if not sym_info or not tick:
+            return None
+
+        digits = sym_info["digits"]
+        point = float(sym_info["point"] or 0.00001)
+        stops_level = max(int(sym_info.get("trade_stops_level") or 0), 2)
+        offset = stops_level * point
+        tp_dist = abs(tp - price)
+
+        if side.upper() == "SELL":
+            new_price = min(price, tick["bid"] - offset) - point
+            new_tp = new_price - tp_dist
+        else:
+            new_price = max(price, tick["ask"] + offset) + point
+            new_tp = new_price + tp_dist
+
+        new_price = round(new_price, digits)
+        new_tp = round(new_tp, digits)
+        if new_price == round(price, digits):
+            return None
+        return {"price": new_price, "sl": sl, "tp": new_tp}
 
     def modify_order(self, ticket: int, price: float, sl: float, tp: float, symbol: str) -> bool:
         """Modifies pending order price, SL, and TP."""

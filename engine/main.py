@@ -467,6 +467,7 @@ class TesuManager:
             "pending_ticket": bot.pending_ticket,
             "pending_tickets": bot.pending_tickets,
             "position_ticket": bot.position_ticket,
+            "last_error": bot.last_error,
             "events": bot.events if bot.events else [],
             "performance": {
                 "trades_count": len(bot_deals),
@@ -638,6 +639,30 @@ class TesuManager:
                 self.save_persisted_archive()
                 logger.info(f"Cleared archived bot {bot_id} from disk storage.")
 
+        elif cmd == "UPDATE_BOT_LIMITS":
+            bot_id = data.get("bot_id")
+            if bot_id in self.bots:
+                bot = self.bots[bot_id]
+                above = data.get("stop_above_price")
+                below = data.get("stop_below_price")
+                try:
+                    bot.stop_above_price = float(above) if above not in (None, "", 0, "0") else None
+                except (TypeError, ValueError):
+                    bot.stop_above_price = None
+                try:
+                    bot.stop_below_price = float(below) if below not in (None, "", 0, "0") else None
+                except (TypeError, ValueError):
+                    bot.stop_below_price = None
+                bot.config["stop_above_price"] = bot.stop_above_price
+                bot.config["stop_below_price"] = bot.stop_below_price
+                self.archived_bots[bot_id] = self.serialize_bot(bot)
+                self.save_persisted_archive()
+                logger.info(f"Updated live limits for {bot_id}: above={bot.stop_above_price} below={bot.stop_below_price}")
+                await self.broadcast({
+                    "type": "BOT_UPDATED",
+                    "bot": self.serialize_bot(bot)
+                })
+
         elif cmd == "GET_REPORT":
             days = int(data.get("days", 30))
             report = self.bridge.get_full_trading_report(days=days)
@@ -645,6 +670,55 @@ class TesuManager:
             await self.broadcast({
                 "type": "REPORT_DATA",
                 "report": report
+            })
+
+    def send_bot_stop_order(
+        self,
+        symbol: str,
+        side: str,
+        entry: float,
+        sl: float,
+        tp: float,
+        volume: float,
+        magic: int,
+        comment: str
+    ) -> Dict[str, Any]:
+        """Sends a stop order and retries once with a nudged price if MT5 returns Invalid price."""
+        result = self.bridge.send_stop_order_result(symbol, side, entry, sl, tp, volume, magic, comment)
+        if result.get("ok") or not result.get("is_invalid_price"):
+            return result
+
+        nudged = self.bridge.adjust_invalid_stop_price(symbol, side, entry, sl, tp)
+        if not nudged:
+            return result
+
+        logger.info(f"Retrying stop order after Invalid price: {entry} -> {nudged['price']}")
+        retry = self.bridge.send_stop_order_result(
+            symbol, side, nudged["price"], nudged["sl"], nudged["tp"], volume, magic, comment
+        )
+        retry["retried"] = True
+        retry["original_price"] = entry
+        return retry
+
+    def finalize_pending_placement(self, bot: PullbackStrategyInstance, tickets: list, last_result: Dict[str, Any], extra: Dict[str, Any]):
+        placed = [t for t in tickets if t]
+        if placed:
+            bot.pending_ticket = placed[-1]
+            bot.pending_tickets = placed
+            bot.state = "PENDING_ACTIVE"
+            bot.last_error = None
+            bot.log_event("ORDER_PLACED", {"tickets": placed, **extra})
+        else:
+            comment = last_result.get("comment") or "ارسال اردر توسط متاتریدر رد شد"
+            bot.pending_ticket = None
+            bot.pending_tickets = []
+            bot.state = "ORDER_FAILED"
+            bot.last_error = comment
+            bot.log_event("ORDER_REJECTED", {
+                "comment": comment,
+                "retcode": last_result.get("retcode"),
+                "retried": last_result.get("retried", False),
+                **extra
             })
 
     async def start_bot_instance(self, data: Dict[str, Any], sender: Optional[Any] = None):
@@ -861,11 +935,15 @@ class TesuManager:
 
                                         lots_half = self.bridge.calculate_lot_size(bot.symbol, risk_to_use / 2.0, entry, sl, commission_per_lot=comm)
 
-                                        t1 = self.bridge.send_stop_order(bot.symbol, side, entry, sl, tp1, lots_half, magic, comment=f"Tesu_{bot.bot_id}_1")
-                                        t2 = self.bridge.send_stop_order(bot.symbol, side, entry, sl, tp2, lots_half, magic, comment=f"Tesu_{bot.bot_id}_2")
-                                        bot.pending_ticket = t2 or t1
-                                        bot.pending_tickets = [t for t in [t1, t2] if t is not None]
-                                        bot.log_event("DOUBLE_ORDER_PLACED", {"t1": t1, "t2": t2, "lots": lots_half, "risk": risk_to_use, "tp1": tp1, "tp2": tp2})
+                                        r1 = self.send_bot_stop_order(bot.symbol, side, entry, sl, tp1, lots_half, magic, comment=f"Tesu_{bot.bot_id}_1")
+                                        r2 = self.send_bot_stop_order(bot.symbol, side, entry, sl, tp2, lots_half, magic, comment=f"Tesu_{bot.bot_id}_2")
+                                        last_result = r2 if not r2.get("ok") else r1
+                                        self.finalize_pending_placement(
+                                            bot,
+                                            [r1.get("ticket"), r2.get("ticket")],
+                                            last_result,
+                                            {"lots": lots_half, "risk": risk_to_use, "tp1": tp1, "tp2": tp2, "double": True}
+                                        )
                                     else:
                                         # Single position: also add commission offset to TP so net gain matches full R
                                         comm_rate = comm if (comm is not None and comm > 0) else self.bridge.get_auto_commission_per_lot(bot.symbol)
@@ -879,23 +957,21 @@ class TesuManager:
                                         adjusted_tp = entry - target_dist if side == "SELL" else entry + target_dist
 
                                         lots = self.bridge.calculate_lot_size(bot.symbol, risk_to_use, entry, sl, commission_per_lot=comm)
-                                        ticket = self.bridge.send_stop_order(
-                                            symbol=bot.symbol,
-                                            side=side,
-                                            price=entry,
-                                            sl=sl,
-                                            tp=adjusted_tp,
-                                            volume=lots,
-                                            magic=magic,
-                                            comment=f"Tesu_{bot.bot_id}"
+                                        result = self.send_bot_stop_order(
+                                            bot.symbol, side, entry, sl, adjusted_tp, lots, magic, comment=f"Tesu_{bot.bot_id}"
                                         )
-                                        if ticket:
-                                            bot.pending_ticket = ticket
-                                            bot.pending_tickets = [ticket]
-                                            bot.log_event("ORDER_PLACED", {"ticket": ticket, "lots": lots, "entry": entry, "sl": sl, "tp": adjusted_tp, "spread": spread_price, "commission": comm, "risk": risk_to_use})
+                                        self.finalize_pending_placement(
+                                            bot,
+                                            [result.get("ticket")],
+                                            result,
+                                            {"lots": lots, "entry": result.get("price", entry), "sl": sl, "tp": adjusted_tp, "spread": spread_price, "commission": comm, "risk": risk_to_use}
+                                        )
 
                                 elif action_type == "MOVE_PENDING":
                                     tickets_to_move = bot.pending_tickets if bot.pending_tickets else ([bot.pending_ticket] if bot.pending_ticket else [])
+                                    if not tickets_to_move:
+                                        bot.state = "ORDER_FAILED"
+                                        bot.last_error = bot.last_error or "اردر معلقی در متاتریدر ثبت نشد"
                                     entry = action_req["price"]
                                     sl = action_req["sl"]
                                     side = bot.side

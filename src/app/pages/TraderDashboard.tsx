@@ -23,8 +23,23 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  FileText
+  FileText,
+  Settings2,
+  Copy
 } from "lucide-react";
+
+const BOT_STATE_LABELS: Record<string, string> = {
+  WAITING_PULLBACK: "انتظار پولبک",
+  PENDING_ACTIVE: "اردر معلق",
+  POSITION_ACTIVE: "پوزیشن باز",
+  ORDER_FAILED: "خطای ارسال",
+  FINISHED: "تمام‌شده",
+  CANCELLED: "لغو شده",
+};
+
+function botStateLabel(state: string): string {
+  return BOT_STATE_LABELS[state] || state;
+}
 
 interface SavedPreset {
   id: string;
@@ -51,6 +66,7 @@ export function TraderDashboard() {
     openPositions,
     startBot,
     stopBot,
+    updateBotLimits,
     deleteBot,
     closePosition,
     clearArchivedBot,
@@ -82,6 +98,10 @@ export function TraderDashboard() {
   // Bot report modal
   const [selectedBotForReport, setSelectedBotForReport] = useState<BotInstance | null>(null);
   const [showEventsLog, setShowEventsLog] = useState(false);
+
+  const [limitsBot, setLimitsBot] = useState<BotInstance | null>(null);
+  const [editStopAbove, setEditStopAbove] = useState("");
+  const [editStopBelow, setEditStopBelow] = useState("");
 
   // Close symbol dropdown on click outside
   useEffect(() => {
@@ -139,6 +159,37 @@ export function TraderDashboard() {
     setPresetName("");
     setPresetCode("");
     setShowPresetModal(false);
+  };
+
+  const loadBotIntoLauncher = (bot: BotInstance) => {
+    setSymbol(bot.symbol);
+    setTimeframe(bot.timeframe);
+    setRiskUsd(bot.base_risk_usd || bot.risk_usd);
+    setRrRatio(bot.rr_ratio || 2);
+    setIsDouble(!!bot.is_double);
+    setMaxOpenPositions(bot.max_open_positions ?? 0);
+    setMartingaleEnabled(!!bot.martingale_enabled);
+    setMartingaleStepPct(bot.martingale_step_pct ?? 10);
+    setStopAbovePrice("");
+    setStopBelowPrice("");
+    setSymbolSearchQuery(bot.symbol);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openLimitsEditor = (bot: BotInstance) => {
+    setLimitsBot(bot);
+    setEditStopAbove(bot.stop_above_price != null ? String(bot.stop_above_price) : "");
+    setEditStopBelow(bot.stop_below_price != null ? String(bot.stop_below_price) : "");
+  };
+
+  const saveLiveLimits = () => {
+    if (!limitsBot) return;
+    updateBotLimits(
+      limitsBot.bot_id,
+      editStopAbove ? Number(editStopAbove) : null,
+      editStopBelow ? Number(editStopBelow) : null
+    );
+    setLimitsBot(null);
   };
 
   const loadPreset = (p: SavedPreset) => {
@@ -634,115 +685,106 @@ export function TraderDashboard() {
             <p className="text-xs opacity-75 mt-1">Select symbol, side and start a pullback execution above</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5">
             {activeBotList.map((bot) => (
               <div
                 key={bot.bot_id}
-                className={`bg-card border rounded-xl p-5 shadow-sm space-y-3 transition-all ${
-                  bot.state === "CANCELLED" ? "border-border/40 opacity-60" : "border-border"
+                className={`bg-card border rounded-lg px-3 py-2 shadow-sm space-y-1.5 transition-all ${
+                  bot.state === "CANCELLED"
+                    ? "border-border/40 opacity-60"
+                    : bot.state === "ORDER_FAILED"
+                    ? "border-rose-500/40"
+                    : "border-border"
                 }`}
               >
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
                         bot.side === "SELL" ? "bg-rose-500/10 text-rose-500" : "bg-emerald-500/10 text-emerald-500"
                       }`}
                     >
                       {bot.side}
                     </span>
-                    <span className="font-bold text-sm text-foreground">{bot.symbol}</span>
-                    <span className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                    <span className="font-bold text-xs text-foreground truncate">{bot.symbol}</span>
+                    <span className="text-[10px] font-mono bg-muted px-1 py-0.5 rounded text-muted-foreground shrink-0">
                       {bot.timeframe}
                     </span>
                   </div>
                   <span
-                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${
                       bot.state === "WAITING_PULLBACK"
                         ? "bg-amber-500/10 text-amber-500 animate-pulse"
                         : bot.state === "PENDING_ACTIVE"
                         ? "bg-blue-500/10 text-blue-500 font-bold"
                         : bot.state === "POSITION_ACTIVE"
                         ? "bg-emerald-500/10 text-emerald-500 font-bold"
+                        : bot.state === "ORDER_FAILED"
+                        ? "bg-rose-500/15 text-rose-500 font-bold"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {bot.state}
+                    {botStateLabel(bot.state)}
                   </span>
                 </div>
 
-                {/* Metrics */}
-                <div className="grid grid-cols-2 gap-2 text-xs bg-muted/30 p-2.5 rounded-lg font-mono">
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Reference Point A</span>
-                    <span className="font-semibold text-foreground">{bot.A?.toFixed(5) || "--"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">ATR (14)</span>
-                    <span className="font-semibold text-foreground">{bot.atr14?.toFixed(5) || "--"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Pending Entry</span>
-                    <span className="font-semibold text-primary">{bot.pending_entry?.toFixed(5) || "--"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Stop Loss</span>
-                    <span className="font-semibold text-rose-500">{bot.pending_sl?.toFixed(5) || "--"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Current Risk ($)</span>
-                    <span className="font-semibold text-amber-500">
-                      ${bot.risk_usd?.toFixed(2) || "20.00"}
-                      {bot.consecutive_losses ? ` (${bot.consecutive_losses}L)` : ""}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Open Positions</span>
-                    <span className="font-semibold text-foreground">
-                      {bot.open_positions_count || 0}
-                      {bot.max_open_positions ? ` / ${bot.max_open_positions}` : " (Unltd)"}
-                    </span>
-                  </div>
-                  {(bot.stop_above_price || bot.stop_below_price) && (
-                    <div className="col-span-2 text-[10px] text-muted-foreground bg-background/50 px-2 py-1 rounded border border-border/40">
-                      <span>محدوده فعالیت: </span>
-                      {bot.stop_below_price && <span>کف: {bot.stop_below_price} </span>}
-                      {bot.stop_above_price && <span>سقف: {bot.stop_above_price}</span>}
-                    </div>
-                  )}
-                  {bot.stop_reason && (
-                    <div className="col-span-2 text-[10px] text-rose-500 font-sans bg-rose-500/10 px-2 py-1 rounded">
-                      علت توقف: {bot.stop_reason}
-                    </div>
-                  )}
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] font-mono text-muted-foreground">
+                  <span>A <b className="text-foreground">{bot.A?.toFixed(5) || "--"}</b></span>
+                  <span>ورود <b className="text-primary">{bot.pending_entry?.toFixed(5) || "--"}</b></span>
+                  <span>ریسک <b className="text-amber-500">${bot.risk_usd?.toFixed(0) || "0"}</b></span>
+                  <span>باز <b className="text-foreground">{bot.open_positions_count || 0}{bot.max_open_positions ? `/${bot.max_open_positions}` : ""}</b></span>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-1">
+                {(bot.stop_above_price || bot.stop_below_price) && (
+                  <p className="text-[10px] text-muted-foreground">
+                    محدوده: {bot.stop_below_price ? `کف ${bot.stop_below_price}` : ""}{bot.stop_below_price && bot.stop_above_price ? " / " : ""}{bot.stop_above_price ? `سقف ${bot.stop_above_price}` : ""}
+                  </p>
+                )}
+                {bot.last_error && (
+                  <p className="text-[10px] text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded leading-snug">
+                    {bot.last_error}
+                  </p>
+                )}
+                {bot.stop_reason && (
+                  <p className="text-[10px] text-rose-500">علت توقف: {bot.stop_reason}</p>
+                )}
+
+                <div className="flex items-center justify-end gap-1 pt-0.5">
+                  <button
+                    onClick={() => loadBotIntoLauncher(bot)}
+                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground cursor-pointer"
+                    title="کپی تنظیمات به لانچر"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => openLimitsEditor(bot)}
+                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground cursor-pointer"
+                    title="تغییر محدوده توقف"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => setSelectedBotForReport(bot)}
-                    className="px-2.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs py-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors font-medium cursor-pointer"
-                    title="مشاهده گزارش عملکرد و سوابق این ربات"
+                    className="p-1.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary cursor-pointer"
+                    title="گزارش عملکرد"
                   >
                     <BarChart2 className="w-3.5 h-3.5" />
-                    گزارش
                   </button>
                   <button
                     onClick={() => stopBot(bot.bot_id)}
                     disabled={bot.state === "CANCELLED"}
-                    className="flex-1 bg-muted hover:bg-muted/80 text-foreground text-xs py-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors font-medium disabled:opacity-40 cursor-pointer"
+                    className="p-1.5 rounded-md bg-muted/60 hover:bg-muted text-foreground disabled:opacity-40 cursor-pointer"
+                    title="توقف ربات"
                   >
                     <Square className="w-3.5 h-3.5" />
-                    Cancel Bot
                   </button>
                   <button
                     onClick={() => deleteBot(bot.bot_id)}
-                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs py-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors font-medium cursor-pointer"
-                    title="توقف، بستن معاملات و انتقال به آرشیو"
+                    className="p-1.5 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer"
+                    title="حذف و آرشیو"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete & Archive
                   </button>
                 </div>
               </div>
@@ -884,8 +926,8 @@ export function TraderDashboard() {
                       {bot.timeframe}
                     </span>
                   </div>
-                  <span className="text-[10px] bg-muted text-muted-foreground font-mono px-2 py-0.5 rounded">
-                    {bot.state}
+                  <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                    {botStateLabel(bot.state)}
                   </span>
                 </div>
 
@@ -928,6 +970,56 @@ export function TraderDashboard() {
           </div>
         )}
       </div>
+
+      {limitsBot && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border w-full max-w-sm rounded-xl shadow-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-foreground">محدوده توقف ربات</h3>
+              <button onClick={() => setLimitsBot(null)} className="text-muted-foreground hover:text-foreground">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {limitsBot.symbol} / {limitsBot.side} — می‌توانید سقف و کف را همین حالا اضافه یا ویرایش کنید.
+            </p>
+            <div className="space-y-2">
+              <label className="block text-[11px] text-muted-foreground">توقف اگر بالاتر از</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="بدون سقف"
+                value={editStopAbove}
+                onChange={(e) => setEditStopAbove(e.target.value)}
+                className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground font-mono"
+              />
+              <label className="block text-[11px] text-muted-foreground">توقف اگر کمتر از</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="بدون کف"
+                value={editStopBelow}
+                onChange={(e) => setEditStopBelow(e.target.value)}
+                className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground font-mono"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setLimitsBot(null)}
+                className="flex-1 bg-muted hover:bg-muted/80 text-foreground text-xs py-1.5 rounded-lg cursor-pointer"
+              >
+                انصراف
+              </button>
+              <button
+                onClick={saveLiveLimits}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs py-1.5 rounded-lg font-medium cursor-pointer"
+              >
+                ذخیره محدوده
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 4. MODAL: BOT PERFORMANCE & AUDIT REPORT                      */}

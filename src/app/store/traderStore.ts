@@ -47,7 +47,8 @@ export interface BotInstance {
   stop_above_price?: number | null;
   stop_below_price?: number | null;
   stop_reason?: string | null;
-  state: "WAITING_PULLBACK" | "PENDING_ACTIVE" | "POSITION_ACTIVE" | "FINISHED" | "CANCELLED";
+  last_error?: string | null;
+  state: "WAITING_PULLBACK" | "PENDING_ACTIVE" | "POSITION_ACTIVE" | "ORDER_FAILED" | "FINISHED" | "CANCELLED";
   A: number | null;
   atr14: number;
   pending_entry: number | null;
@@ -147,6 +148,7 @@ interface TraderState {
     stop_below_price?: number;
   }) => void;
   stopBot: (botId: string) => void;
+  updateBotLimits: (botId: string, stopAbove?: number | null, stopBelow?: number | null) => void;
   deleteBot: (botId: string) => void;
   closeAllBotTrades: (botId: string) => void;
   connectMt5: (credentials: { path?: string; login?: number; password?: string; server?: string; stop_existing?: boolean }) => void;
@@ -294,6 +296,18 @@ export const useTraderStore = create<TraderState>((set, get) => ({
     const ws = get().ws;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "STOP_BOT", bot_id: botId }));
+    }
+  },
+
+  updateBotLimits: (botId, stopAbove, stopBelow) => {
+    const ws = get().ws;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "UPDATE_BOT_LIMITS",
+        bot_id: botId,
+        stop_above_price: stopAbove ?? null,
+        stop_below_price: stopBelow ?? null,
+      }));
     }
   },
 

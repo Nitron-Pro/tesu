@@ -1,14 +1,17 @@
 import { useSettingsStore } from "@/core/store/settingsStore";
 import { useUpdaterStore } from "@/core/store/updaterStore";
-import { Moon, Globe, RefreshCw, Server } from "lucide-react";
+import { useNotificationStore } from "@/core/store/notificationStore";
+import { sendWindowsTestNotification } from "@/core/services/systemNotify";
+import { Moon, Globe, RefreshCw, Server, Type, Bell } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { APP_CONFIG } from "@/app/config";
 
 export const Settings = () => {
-  const { theme, language, autoUpdate, setTheme, setLanguage, setAutoUpdate, t } =
+  const { theme, language, faFont, enFont, autoUpdate, setTheme, setLanguage, setFaFont, setEnFont, setAutoUpdate, t } =
     useSettingsStore();
+  const { toast } = useNotificationStore();
 
   const {
     currentVersion,
@@ -53,6 +56,14 @@ export const Settings = () => {
                   className="h-7 text-xs"
                 >
                   {t("dark")}
+                </Button>
+                <Button
+                  onClick={() => setTheme("midnight")}
+                  variant={theme === "midnight" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 text-xs"
+                >
+                  {t("midnight")}
                 </Button>
                 <Button
                   onClick={() => setTheme("light")}
@@ -102,6 +113,67 @@ export const Settings = () => {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs flex items-center gap-2">
+              <Type className="w-4 h-4 text-primary" />
+              <span>{t("fontPair")}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between text-xs gap-3">
+              <div>
+                <p className="font-medium text-foreground">{t("faFont")}</p>
+                <p className="text-muted-foreground text-[11px]">{t("faFontDesc")}</p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-muted p-1 rounded-xl border border-border/60">
+                <Button onClick={() => setFaFont("vazirmatn")} variant={faFont === "vazirmatn" ? "default" : "ghost"} size="sm" className="h-7 text-xs">{t("fontVazir")}</Button>
+                <Button onClick={() => setFaFont("estedad")} variant={faFont === "estedad" ? "default" : "ghost"} size="sm" className="h-7 text-xs">{t("fontEstedad")}</Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs gap-3 pt-3 border-t border-border/60">
+              <div>
+                <p className="font-medium text-foreground">{t("enFont")}</p>
+                <p className="text-muted-foreground text-[11px]">{t("enFontDesc")}</p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-muted p-1 rounded-xl border border-border/60">
+                <Button onClick={() => setEnFont("inter")} variant={enFont === "inter" ? "default" : "ghost"} size="sm" className="h-7 text-xs">{t("fontInter")}</Button>
+                <Button onClick={() => setEnFont("dm-sans")} variant={enFont === "dm-sans" ? "default" : "ghost"} size="sm" className="h-7 text-xs">{t("fontDm")}</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" />
+              <span>{t("testWindowsNotify")}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const result = await sendWindowsTestNotification(
+                  APP_CONFIG.appName,
+                  "Tesu Windows notification test"
+                );
+                if (result.ok) {
+                  toast({ type: "success", title: t("testWindowsNotify"), message: t("notifySent"), duration: 7000 });
+                } else if (result.detail === "permission-denied") {
+                  toast({ type: "warning", title: t("testWindowsNotify"), message: t("notifyDenied") });
+                } else {
+                  toast({ type: "error", title: t("notifyFailed"), message: result.detail, duration: 8000 });
+                }
+              }}
+            >
+              {t("testWindowsNotify")}
+            </Button>
           </CardContent>
         </Card>
 

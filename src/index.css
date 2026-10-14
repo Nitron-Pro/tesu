@@ -27,6 +27,30 @@
   }
 
   .dark {
+    /* Sophisticated Dark Navy Slate Theme (rich deep tone instead of flat pitch-black) */
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 9.5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 7%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 33% 16%;
+    --input: 217 33% 16%;
+    --ring: 224 76% 48%;
+  }
+
+  .midnight {
+    /* Jet Dark Pitch-Black (original ultra-dark mode) */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 5.5%;

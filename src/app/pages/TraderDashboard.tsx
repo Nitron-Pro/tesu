@@ -218,12 +218,13 @@ export function TraderDashboard() {
     syncPresetsToEngine(updated);
   };
 
-  const activeBotList = Object.values(bots).filter(
-    (bot) => account?.login && Number(bot.account_login) === Number(account.login)
-  );
-  const archivedForAccount = Object.values(archivedBots || {}).filter(
-    (bot) => account?.login && Number(bot.account_login) === Number(account.login)
-  );
+  const sameAccount = (bot: BotInstance) => {
+    if (!account?.login) return true;
+    if (bot.account_login == null) return true;
+    return Number(bot.account_login) === Number(account.login);
+  };
+  const activeBotList = Object.values(bots).filter(sameAccount);
+  const archivedForAccount = Object.values(archivedBots || {}).filter(sameAccount);
 
   const handleLaunch = (side: "BUY" | "SELL") => {
     startBot({
@@ -587,6 +588,7 @@ export function TraderDashboard() {
           {/* Action Buttons: SELL / BUY */}
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => handleLaunch("SELL")}
               disabled={!isMt5Connected}
               className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs shadow-md"
@@ -595,6 +597,7 @@ export function TraderDashboard() {
               SELL
             </button>
             <button
+              type="button"
               onClick={() => handleLaunch("BUY")}
               disabled={!isMt5Connected}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-xs shadow-md"

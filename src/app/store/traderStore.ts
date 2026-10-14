@@ -258,8 +258,12 @@ export const useTraderStore = create<TraderState>((set, get) => ({
               }));
             }
           } else if (msg.type === "BOT_STARTED" || msg.type === "BOT_UPDATED") {
+            const login = get().account?.login;
+            const bot = msg.bot?.account_login == null && login
+              ? { ...msg.bot, account_login: login }
+              : msg.bot;
             set((state) => ({
-              bots: { ...state.bots, [msg.bot.bot_id]: msg.bot },
+              bots: { ...state.bots, [bot.bot_id]: bot },
             }));
           } else if (msg.type === "BOT_STOPPED") {
             set((state) => {
@@ -303,14 +307,17 @@ export const useTraderStore = create<TraderState>((set, get) => ({
 
   startBot: (config) => {
     const ws = get().ws;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(
-        JSON.stringify({
-          action: "START_BOT",
-          ...config,
-        })
-      );
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      alert("موتور ترید وصل نیست. چند ثانیه صبر کنید و دوباره بزنید.");
+      get().connectEngine();
+      return;
     }
+    ws.send(
+      JSON.stringify({
+        action: "START_BOT",
+        ...config,
+      })
+    );
   },
 
   stopBot: (botId) => {

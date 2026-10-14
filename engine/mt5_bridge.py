@@ -337,8 +337,11 @@ class MT5Bridge:
                 err = mt5.last_error()
                 broker_comment = str(err[1] if err else "ارسال اردر ناموفق")
             invalid_price = (
-                retcode == getattr(mt5, "TRADE_RETCODE_INVALID_PRICE", 10015)
-                or "invalid price" in broker_comment.lower()
+                retcode in (
+                    getattr(mt5, "TRADE_RETCODE_INVALID_PRICE", 10015),
+                    getattr(mt5, "TRADE_RETCODE_INVALID_STOPS", 10016),
+                )
+                or "invalid" in broker_comment.lower()
             )
             logger.error(f"Order send failed ({side} STOP at {price}): {retcode} - {broker_comment}")
             return {
@@ -415,24 +418,41 @@ class MT5Bridge:
             return None
         return {"price": new_price, "sl": new_sl, "tp": new_tp}
 
-    def modify_order(self, ticket: int, price: float, sl: float, tp: float, symbol: str) -> bool:
-        """Modifies pending order price, SL, and TP."""
-        sym_info = self.get_symbol_info(symbol)
-        digits = sym_info["digits"] if sym_info else 5
+    def _is_invalid_price(self, retcode, comment: str) -> bool:
+        return retcode in (
+            getattr(mt5, "TRADE_RETCODE_INVALID_PRICE", 10015),
+            getattr(mt5, "TRADE_RETCODE_INVALID_STOPS", 10016),
+        ) or "invalid" in (comment or "").lower()
 
-        request = {
-            "action": mt5.TRADE_ACTION_MODIFY,
-            "order": int(ticket),
-            "price": round(price, digits),
-            "sl": round(sl, digits),
-            "tp": round(tp, digits),
-            "type_time": mt5.ORDER_TIME_GTC,
-        }
-        result = mt5.order_send(request)
-        if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
-            logger.error(f"Modify order #{ticket} failed: {result.retcode if result else mt5.last_error()} - {result.comment if result else ''}")
-            return False
-        return True
+    def modify_order(self, ticket: int, price: float, sl: float, tp: float, symbol: str) -> bool:
+        """Modifies a pending order. On an invalid price, retries up to 5 times, moving price, SL and TP together."""
+        side = "SELL" if sl >= price else "BUY"
+        cur_price, cur_sl, cur_tp = price, sl, tp
+        for attempt in range(5):
+            sym_info = self.get_symbol_info(symbol)
+            digits = sym_info["digits"] if sym_info else 5
+            request = {
+                "action": mt5.TRADE_ACTION_MODIFY,
+                "order": int(ticket),
+                "price": round(cur_price, digits),
+                "sl": round(cur_sl, digits),
+                "tp": round(cur_tp, digits),
+                "type_time": mt5.ORDER_TIME_GTC,
+            }
+            result = mt5.order_send(request)
+            if result is not None and result.retcode == mt5.TRADE_RETCODE_DONE:
+                logger.info(f"Modify order #{ticket} ok on attempt {attempt + 1}: price={cur_price} sl={cur_sl} tp={cur_tp}")
+                return True
+            comment = (result.comment if result else "") or ""
+            retcode = result.retcode if result else None
+            logger.error(f"Modify order #{ticket} failed attempt {attempt + 1}/5: {retcode} - {comment}")
+            if not self._is_invalid_price(retcode, comment) or attempt == 4:
+                return False
+            nudged = self.adjust_invalid_stop_price(symbol, side, cur_price, cur_sl, cur_tp, attempt + 1)
+            if not nudged:
+                return False
+            cur_price, cur_sl, cur_tp = nudged["price"], nudged["sl"], nudged["tp"]
+        return False
 
     def modify_position_sl(self, ticket: int, sl: float, symbol: str) -> bool:
         """Modifies Stop Loss of an open active position (Breakeven / Trailing)."""

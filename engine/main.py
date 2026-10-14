@@ -821,7 +821,8 @@ class TesuManager:
             bot.pending_sl = extra.get("sl", bot.pending_sl)
             bot.pending_tp = extra.get("tp", bot.pending_tp)
             bot.state = "PENDING_ACTIVE"
-            bot.last_error = None
+            failed = extra.get("failed_comment")
+            bot.last_error = failed
             bot.log_event("ORDER_PLACED", {"tickets": placed, **extra})
         else:
             comment = last_result.get("comment") or "ارسال اردر توسط متاتریدر رد شد"
@@ -1088,12 +1089,21 @@ class TesuManager:
 
                                         r1 = self.send_bot_stop_order(bot.symbol, side, entry, sl, tp1, lots_half, magic, comment=f"Tesu_{bot.bot_id}_1")
                                         r2 = self.send_bot_stop_order(bot.symbol, side, entry, sl, tp2, lots_half, magic, comment=f"Tesu_{bot.bot_id}_2")
-                                        last_result = r2 if not r2.get("ok") else r1
+                                        failed = next((r for r in (r1, r2) if not r.get("ok")), None)
                                         self.finalize_pending_placement(
                                             bot,
                                             [r1.get("ticket"), r2.get("ticket")],
-                                            last_result,
-                                            {"lots": lots_half, "risk": risk_to_use, "entry": (r2 if r2.get("ok") else r1).get("price", entry), "sl": sl, "tp": tp2, "tp1": tp1, "tp2": tp2, "double": True}
+                                            failed or r1,
+                                            {
+                                                "lots": lots_half,
+                                                "risk": risk_to_use,
+                                                "entry": (r2 if r2.get("ok") else r1).get("price", entry),
+                                                "sl": sl,
+                                                "tp": tp2,
+                                                "tp1": tp1,
+                                                "double": True,
+                                                "failed_comment": None if failed is None else (failed.get("comment") or "یکی از اردرهای دبل رد شد"),
+                                            }
                                         )
                                     else:
                                         # Single position: also add commission offset to TP so net gain matches full R

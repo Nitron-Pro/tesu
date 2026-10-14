@@ -25,9 +25,37 @@ if ($msiFile) {
 
 # 3. Copy Portable Single-File Executable
 $rawExe = "$releaseDir\nora.exe"
+$portable = [System.IO.Path]::GetFullPath((Join-Path $OutputDir "Tesu_Trader.exe"))
 if (Test-Path $rawExe) {
-    Copy-Item $rawExe -Destination "$OutputDir\Tesu_Trader.exe" -Force
-    Write-Host "Copied Portable executable -> $OutputDir\Tesu_Trader.exe"
+    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.ExecutablePath -and $_.ExecutablePath -eq $portable) {
+            Write-Host "Stopping running portable build PID $($_.ProcessId)"
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+    }
+    Start-Sleep -Milliseconds 600
+
+    $copied = $false
+    try {
+        Copy-Item $rawExe -Destination $portable -Force -ErrorAction Stop
+        $copied = $true
+    } catch {
+        $old = "$portable.old"
+        try {
+            if (Test-Path $old) { Remove-Item $old -Force -ErrorAction SilentlyContinue }
+            Rename-Item -LiteralPath $portable -NewName "Tesu_Trader.exe.old" -Force -ErrorAction Stop
+            Copy-Item $rawExe -Destination $portable -Force -ErrorAction Stop
+            Remove-Item $old -Force -ErrorAction SilentlyContinue
+            $copied = $true
+        } catch {
+            Write-Host "[ERROR] Could not replace locked file: $portable"
+            Write-Host $_.Exception.Message
+            exit 1
+        }
+    }
+    if ($copied) {
+        Write-Host "Copied Portable executable -> $portable"
+    }
 }
 
 # Clean up any leftover secondary executables to ensure STRICT SINGLE-FILE output

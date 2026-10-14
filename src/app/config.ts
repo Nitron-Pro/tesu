@@ -45,7 +45,7 @@ export interface AppConfig {
 export const APP_CONFIG: AppConfig = {
   appName: "Tesu Trader",
   appId: "com.tesu.trader",
-  version: "1.1.0",
+  version: "1.2.0",
   coreVersion: "1.7.0",
   defaultLanguage: "fa",
   defaultTheme: "dark",

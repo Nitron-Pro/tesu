@@ -5,7 +5,7 @@
 # Tesu Trader (تسو تریدر)
 ### سامانه معاملاتی خودکار و الگوریتمی متاتریدر ۵ مبتنی بر متدولوژی پولبک استاپ-انتری
 
-[![Release](https://img.shields.io/badge/Release-v1.0.0-emerald?style=for-the-badge&logo=github)](https://github.com/Nitron-Pro/tesu/releases/tag/v1.0.0)
+[![Release](https://img.shields.io/badge/Release-v1.2.0-emerald?style=for-the-badge&logo=github)](https://github.com/Nitron-Pro/tesu/releases/tag/v1.2.0)
 [![Built with Nora](https://img.shields.io/badge/Architecture-Nora%20Core-blue?style=for-the-badge&logo=tauri)](https://github.com/Nitron-Pro/nora)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x64-black?style=for-the-badge&logo=windows)](https://github.com/Nitron-Pro/tesu/releases)
 [![MetaTrader 5](https://img.shields.io/badge/Integration-MetaTrader%205-orange?style=for-the-badge&logo=meta)](https://www.metatrader5.com)
@@ -15,7 +15,7 @@
   <b>Tesu Trader</b> یک پلتفرم معاملاتی مدرن دسکتاپ بر پایه فریم‌ورک قدرتمند <b><a href="https://github.com/Nitron-Pro/nora">نورا (Nora)</a></b> (ترکیب Tauri 2.0، Rust و React) است که با اتصال فوق‌سریع به پایتون و پروتکل مستقیم MetaTrader 5، استراتژی‌های پیوسته معاملاتی پولبک را بدون دخالت دست، با مدیریت ریسک دقیق و محاسبات خودکار لات اجرا می‌کند.
 </p>
 
-[دانلود آخرین نسخه (v1.0.0)](https://github.com/Nitron-Pro/tesu/releases/tag/v1.0.0) • [مستندات معماری](docs/ARCHITECTURE.md) • [گزارش نسخه](docs/ROADMAP.md)
+[دانلود آخرین نسخه (v1.2.0)](https://github.com/Nitron-Pro/tesu/releases/tag/v1.2.0) • [مستندات معماری](docs/ARCHITECTURE.md) • [گزارش نسخه](docs/ROADMAP.md)
 
 ---
 
@@ -128,7 +128,7 @@ tesu/
 ### اجرای مستقیم از فایل نصبی / پرتابل
 شما می‌توانید آخرین نسخه کامپایل‌شده را مستقیماً از بخش **[Releases](https://github.com/Nitron-Pro/tesu/releases)** دانلود و استفاده کنید:
 - **`Tesu_Trader.exe`**: نسخه بدون نیاز به نصب (Portable).
-- **`Tesu_Trader_1.1.0_Setup.exe`**: اینستالر خودکار با ساخت شرتکات دسکتاپ و موتور بدون وابستگی (Standalone).
+- **`Tesu_Trader_1.2.0_Setup.exe`**: اینستالر خودکار با ساخت شرتکات دسکتاپ و موتور بدون وابستگی (Standalone).
 
 ### اجرای محیط توسعه (Development)
 ```powershell

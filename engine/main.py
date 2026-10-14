@@ -122,38 +122,33 @@ class TesuManager:
 
     def apply_bot_loss_limit(self, bot: PullbackStrategyInstance, open_count: int) -> bool:
         """
-        Returns True when the bot must not open a new order.
-        A breached limit with open positions only pauses new entries.
-        Once flat, the bot resumes only if there is room for one more risk; otherwise it stops.
+        Returns True when this entry must be skipped.
+        After realized loss passes the cap, the bot keeps analysing.
+        A new signal is taken only while positions are still open and the loss
+        has recovered enough to fit one more risk under the cap.
+        The bot stops itself the moment it is flat after the cap was hit.
         """
         if not bot.max_loss_usd or bot.max_loss_usd <= 0:
             bot.loss_hold = False
             return False
 
         loss = max(0.0, -self.bot_realized_pnl(bot.config.get("magic", self.magic_base)))
-        room = bot.max_loss_usd - loss
         risk = float(bot.current_risk_usd or bot.base_risk_usd or 0)
+        room = bot.max_loss_usd - loss
         breached = loss > bot.max_loss_usd
 
-        if breached and open_count > 0:
-            bot.loss_hold = True
-            return True
+        if not bot.loss_hold and not breached:
+            return False
 
-        if bot.loss_hold or breached:
-            if open_count > 0:
-                bot.loss_hold = True
-                return True
-            if room >= risk:
-                bot.loss_hold = False
-                return False
-            bot.loss_hold = False
+        bot.loss_hold = True
+        if open_count <= 0:
             bot.state = "CANCELLED"
-            bot.stop_reason = f"حد ضرر بات پر شد (${loss:.2f} از ${bot.max_loss_usd:.2f}) و فاصله کافی برای ریسک بعدی نماند"
-            bot.log_event("BOT_LOSS_LIMIT", {"loss": loss, "limit": bot.max_loss_usd, "room": round(room, 2)})
+            bot.stop_reason = f"حد ضرر بات رد شد (${loss:.2f} از ${bot.max_loss_usd:.2f}) و پوزیشن بازی نماند"
+            bot.log_event("BOT_LOSS_LIMIT_FLAT", {"loss": loss, "limit": bot.max_loss_usd})
             return True
 
-        bot.loss_hold = False
-        return False
+        # Positions are still open: take the signal only if one full risk fits under the cap.
+        return room < risk
 
     def load_persisted_archive(self) -> Dict[str, Dict[str, Any]]:
         """Loads archived bots from local json file so history persists across app restarts / power outages."""
@@ -1060,7 +1055,7 @@ class TesuManager:
                                 action_type = action_req.get("action")
 
                                 if action_type == "PLACE_PENDING" and entries_blocked:
-                                    bot.last_error = "حد ضرر بات پر شده؛ تا بسته شدن پوزیشن‌های باز ورود جدید نیست" if bot.loss_hold else "ورود جدید تا آزاد شدن حد ضرر متوقف است"
+                                    bot.last_error = "این سیگنال رد شد؛ هنوز به اندازه یک ریسک تا سقف حد ضرر جا نیست" if bot.loss_hold else "ورود جدید تا آزاد شدن حد ضرر روزانه متوقف است"
                                 elif action_type == "PLACE_PENDING":
                                     bot.last_error = None
                                     entry = action_req["price"]

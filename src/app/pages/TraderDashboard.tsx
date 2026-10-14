@@ -811,7 +811,7 @@ export function TraderDashboard() {
                   </p>
                 )}
                 {bot.loss_hold && (
-                  <p className="text-xs text-amber-500">حد ضرر پر شده؛ تا بسته شدن پوزیشن‌های باز ورود جدید نیست</p>
+                  <p className="text-xs text-amber-500">حد ضرر رد شده. تحلیل ادامه دارد و ورود فقط وقتی یک ریسک تا سقف جا باشد گرفته می‌شود. با بسته شدن همه پوزیشن‌ها بات بسته می‌شود.</p>
                 )}
                 {bot.max_loss_usd ? (
                   <p className="text-xs text-muted-foreground">حد ضرر بات: ${bot.max_loss_usd}</p>

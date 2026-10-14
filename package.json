@@ -10,10 +10,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "build:engine": "pyinstaller --noconfirm --clean --distpath src/app/assets/bin engine.spec",
-    "build:all": "npm run build:engine && npm run build && npx @tauri-apps/cli build && powershell -ExecutionPolicy Bypass -File ./scripts/copy-build-output.ps1",
-    "publish:release": "python ./scripts/publish_release.py"
+    "tauri": "tauri"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",

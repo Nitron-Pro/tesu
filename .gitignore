@@ -25,7 +25,6 @@ Thumbs.db
 build/
 *.spec
 
-# Local runner & builder scripts
-local-build.bat
-local-build.ps1
+# Local developer tools (Nora: not committed)
+tools/
 engine/archived_bots.json

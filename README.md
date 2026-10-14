@@ -139,6 +139,17 @@ npm install
 npm run tauri dev
 ```
 
+### بیلد ویندوز
+خروجی پروداکشن با دابل‌کلیک ساخته می‌شود. این لانچر طبق قانون نورا داخل `tools/` است و در گیت نیست:
+
+```bat
+tools\build-app.bat
+tools\build-app.bat frontend
+tools\build-app.bat debug
+```
+
+بیلد کامل اول موتور `tesu_engine` را با PyInstaller می‌سازد، بعد فرانت و Tauri را، و در پایان فایل‌ها را در `build_output/` می‌گذارد.
+
 ---
 
 ## 🔗 ارجاعات و اعتبارنامه (Credits)

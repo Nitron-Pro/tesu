@@ -456,6 +456,9 @@ class TesuManager:
             "martingale_step_pct": bot.martingale_step_pct,
             "stop_above_price": bot.stop_above_price,
             "stop_below_price": bot.stop_below_price,
+            "start_above_price": bot.start_above_price,
+            "start_below_price": bot.start_below_price,
+            "waiting_for_start": bot.waiting_for_start,
             "stop_reason": bot.stop_reason,
             "open_positions_count": len(open_pos),
             "state": bot.state,
@@ -550,11 +553,8 @@ class TesuManager:
                         self.bridge.cancel_order(t)
                 bot.pending_ticket = None
                 bot.pending_tickets = []
-                # Close open positions if any
-                magic = bot.config.get("magic", self.magic_base)
-                self.bridge.close_all_bot_trades(magic)
                 
-                # Snapshot bot before removal for archive
+                # Snapshot bot before removal for archive. Open positions stay in MT5.
                 serialized = self.serialize_bot(bot)
                 self.archived_bots[bot_id] = serialized
                 self.save_persisted_archive()
@@ -743,14 +743,15 @@ class TesuManager:
         bot.symbol = real_symbol
         logger.info(f"Starting bot {bot_id} | Symbol: {real_symbol} | Side: {bot.side} | RiskUSD: {bot.current_risk_usd}$ | Double: {bot.is_double} | Magic: {data['magic']}")
         candles = self.bridge.get_closed_candles(real_symbol, bot.timeframe, count=30)
-        if candles:
+        if candles and not bot.waiting_for_start:
             atr = calculate_atr14(candles)
             bot.on_start(candles[-1], atr)
+        if candles or bot.waiting_for_start:
             self.bots[bot_id] = bot
             # Persist bot snapshot immediately so unexpected shutdowns don't lose its identity
             self.archived_bots[bot_id] = self.serialize_bot(bot)
             self.save_persisted_archive()
-            logger.info(f"Bot {bot_id} started on {real_symbol} with A={bot.A}, ATR={atr}, Magic={data['magic']}")
+            logger.info(f"Bot {bot_id} started on {real_symbol} with A={bot.A}, waiting_for_start={bot.waiting_for_start}, Magic={data['magic']}")
             await self.broadcast({
                 "type": "BOT_STARTED",
                 "bot": self.serialize_bot(bot)
@@ -834,6 +835,17 @@ class TesuManager:
 
                     for bot_id, bot in list(self.bots.items()):
                         if bot.state in ["FINISHED", "CANCELLED"]:
+                            continue
+
+                        if bot.waiting_for_start:
+                            candles = self.bridge.get_closed_candles(bot.symbol, bot.timeframe, count=30)
+                            if candles and candles[-1]["time"] > bot.last_candle_time:
+                                latest = candles[-1]
+                                if bot.arm_if_price_reached(latest):
+                                    atr = calculate_atr14(candles)
+                                    bot.on_start(latest, atr)
+                                    logger.info(f"Bot {bot.bot_id} start price reached. Strategy armed at A={bot.A}")
+                                await self.broadcast({"type": "BOT_UPDATED", "bot": self.serialize_bot(bot)})
                             continue
 
                         magic = bot.config.get("magic", self.magic_base)

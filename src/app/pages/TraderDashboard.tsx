@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 const BOT_STATE_LABELS: Record<string, string> = {
+  WAITING_START: "منتظر شروع",
   WAITING_PULLBACK: "انتظار پولبک",
   PENDING_ACTIVE: "اردر معلق",
   POSITION_ACTIVE: "پوزیشن باز",
@@ -83,6 +84,8 @@ export function TraderDashboard() {
   const [martingaleStepPct, setMartingaleStepPct] = useState(10);
   const [stopAbovePrice, setStopAbovePrice] = useState<string>("");
   const [stopBelowPrice, setStopBelowPrice] = useState<string>("");
+  const [startAbovePrice, setStartAbovePrice] = useState<string>("");
+  const [startBelowPrice, setStartBelowPrice] = useState<string>("");
 
   // Presets state
   const [presets, setPresets] = useState<SavedPreset[]>([]);
@@ -172,6 +175,8 @@ export function TraderDashboard() {
     setMartingaleStepPct(bot.martingale_step_pct ?? 10);
     setStopAbovePrice("");
     setStopBelowPrice("");
+    setStartAbovePrice("");
+    setStartBelowPrice("");
     setSymbolSearchQuery(bot.symbol);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -226,6 +231,8 @@ export function TraderDashboard() {
       martingale_step_pct: Number(martingaleStepPct),
       stop_above_price: stopAbovePrice ? Number(stopAbovePrice) : undefined,
       stop_below_price: stopBelowPrice ? Number(stopBelowPrice) : undefined,
+      start_above_price: startAbovePrice ? Number(startAbovePrice) : undefined,
+      start_below_price: startBelowPrice ? Number(startBelowPrice) : undefined,
     });
   };
 
@@ -636,6 +643,33 @@ export function TraderDashboard() {
             )}
           </div>
 
+          {/* Start price gate, checked only on closed candles of the bot timeframe */}
+          <div className="flex items-center gap-4 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/40">
+            <span className="text-xs font-semibold text-foreground">نقطه شروع بات:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground text-[11px]">شروع اگر بالاتر از:</span>
+              <input
+                type="number"
+                step="any"
+                placeholder="فوری"
+                value={startAbovePrice}
+                onChange={(e) => setStartAbovePrice(e.target.value)}
+                className="w-24 bg-background border border-border rounded px-2 py-1 text-xs text-foreground font-mono"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground text-[11px]">شروع اگر پایین‌تر از:</span>
+              <input
+                type="number"
+                step="any"
+                placeholder="فوری"
+                value={startBelowPrice}
+                onChange={(e) => setStartBelowPrice(e.target.value)}
+                className="w-24 bg-background border border-border rounded px-2 py-1 text-xs text-foreground font-mono"
+              />
+            </div>
+          </div>
+
           {/* Price Range Limits (Stop Above / Stop Below) */}
           <div className="flex items-center gap-4 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/40">
             <span className="text-xs font-semibold text-foreground">محدوده قیمت فعالیت (توقف خودکار بات):</span>
@@ -713,7 +747,7 @@ export function TraderDashboard() {
                   </div>
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
-                      bot.state === "WAITING_PULLBACK"
+                      bot.state === "WAITING_PULLBACK" || bot.state === "WAITING_START"
                         ? "bg-amber-500/10 text-amber-500 animate-pulse"
                         : bot.state === "PENDING_ACTIVE"
                         ? "bg-blue-500/10 text-blue-500 font-bold"
@@ -749,6 +783,11 @@ export function TraderDashboard() {
                   </div>
                 </div>
 
+                {(bot.waiting_for_start || bot.start_above_price || bot.start_below_price) && (
+                  <p className="text-xs text-sky-500">
+                    شروع: {bot.start_above_price ? `بالاتر از ${bot.start_above_price}` : ""}{bot.start_above_price && bot.start_below_price ? " / " : ""}{bot.start_below_price ? `پایین‌تر از ${bot.start_below_price}` : ""}
+                  </p>
+                )}
                 {(bot.stop_above_price || bot.stop_below_price) && (
                   <p className="text-xs text-muted-foreground">
                     محدوده: {bot.stop_below_price ? `کف ${bot.stop_below_price}` : ""}{bot.stop_below_price && bot.stop_above_price ? " / " : ""}{bot.stop_above_price ? `سقف ${bot.stop_above_price}` : ""}

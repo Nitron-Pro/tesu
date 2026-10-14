@@ -49,13 +49,16 @@ class PullbackStrategyInstance:
         self.martingale_step_pct: float = float(config.get("martingale_step_pct", 10.0))  # e.g. 10%
         self.stop_above_price: Optional[float] = float(config["stop_above_price"]) if config.get("stop_above_price") else None
         self.stop_below_price: Optional[float] = float(config["stop_below_price"]) if config.get("stop_below_price") else None
+        self.start_above_price: Optional[float] = float(config["start_above_price"]) if config.get("start_above_price") else None
+        self.start_below_price: Optional[float] = float(config["start_below_price"]) if config.get("start_below_price") else None
+        self.waiting_for_start: bool = self.start_above_price is not None or self.start_below_price is not None
         self.base_risk_usd: float = self.risk_usd
         self.current_risk_usd: float = self.risk_usd
         self.consecutive_losses: int = 0
         self.current_leg: int = 1
 
         # State tracking
-        self.state: str = "WAITING_PULLBACK"  # WAITING_PULLBACK, PENDING_ACTIVE, POSITION_ACTIVE, ORDER_FAILED, FINISHED, CANCELLED
+        self.state: str = "WAITING_START" if self.waiting_for_start else "WAITING_PULLBACK"
         self.stop_reason: Optional[str] = None
         self.last_error: Optional[str] = None
         self.start_time: datetime.datetime = datetime.datetime.now()
@@ -74,6 +77,33 @@ class PullbackStrategyInstance:
         self.lowest_price_since_entry: float = 999999.0
         self.processed_deals: Set[int] = set()
         self.events: List[Dict[str, Any]] = []
+
+    def arm_if_price_reached(self, candle: Dict[str, Any]) -> bool:
+        """
+        Checks a closed candle once. Starts the bot only if that candle traded through
+        the configured start price. After a hit, the start prices are cleared.
+        """
+        if not self.waiting_for_start:
+            return True
+
+        self.last_candle_time = candle["time"]
+        high = float(candle["high"])
+        low = float(candle["low"])
+        reached = True
+        if self.start_above_price is not None and high < self.start_above_price:
+            reached = False
+        if self.start_below_price is not None and low > self.start_below_price:
+            reached = False
+        if not reached:
+            return False
+
+        self.waiting_for_start = False
+        self.start_above_price = None
+        self.start_below_price = None
+        self.config["start_above_price"] = None
+        self.config["start_below_price"] = None
+        self.log_event("START_PRICE_REACHED", {"high": high, "low": low})
+        return True
 
     def on_trade_loss(self, position_id: int):
         """Called when a position hits stop loss."""

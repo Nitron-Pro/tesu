@@ -46,9 +46,12 @@ export interface BotInstance {
   martingale_step_pct?: number;
   stop_above_price?: number | null;
   stop_below_price?: number | null;
+  start_above_price?: number | null;
+  start_below_price?: number | null;
+  waiting_for_start?: boolean;
   stop_reason?: string | null;
   last_error?: string | null;
-  state: "WAITING_PULLBACK" | "PENDING_ACTIVE" | "POSITION_ACTIVE" | "ORDER_FAILED" | "FINISHED" | "CANCELLED";
+  state: "WAITING_START" | "WAITING_PULLBACK" | "PENDING_ACTIVE" | "POSITION_ACTIVE" | "ORDER_FAILED" | "FINISHED" | "CANCELLED";
   A: number | null;
   atr14: number;
   pending_entry: number | null;
@@ -146,6 +149,8 @@ interface TraderState {
     martingale_step_pct?: number;
     stop_above_price?: number;
     stop_below_price?: number;
+    start_above_price?: number;
+    start_below_price?: number;
   }) => void;
   stopBot: (botId: string) => void;
   updateBotLimits: (botId: string, stopAbove?: number | null, stopBelow?: number | null) => void;

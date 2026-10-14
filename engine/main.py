@@ -546,11 +546,6 @@ class TesuManager:
             if bot_id in self.bots:
                 bot = self.bots[bot_id]
                 bot.state = "CANCELLED"
-                # Cancel all pending if any
-                tickets = bot.pending_tickets if bot.pending_tickets else ([bot.pending_ticket] if bot.pending_ticket else [])
-                for t in tickets:
-                    if t:
-                        self.bridge.cancel_order(t)
                 bot.pending_ticket = None
                 bot.pending_tickets = []
                 
@@ -746,6 +741,10 @@ class TesuManager:
         if candles and not bot.waiting_for_start:
             atr = calculate_atr14(candles)
             bot.on_start(candles[-1], atr)
+        elif candles and bot.waiting_for_start:
+            # Ignore the candle that already closed before the bot existed.
+            # Only a candle that closes after this moment can arm the bot.
+            bot.last_candle_time = candles[-1]["time"]
         if candles or bot.waiting_for_start:
             self.bots[bot_id] = bot
             # Persist bot snapshot immediately so unexpected shutdowns don't lose its identity
@@ -776,10 +775,6 @@ class TesuManager:
         if bot_id in self.bots:
             bot = self.bots[bot_id]
             bot.state = "CANCELLED"
-            tickets = bot.pending_tickets if bot.pending_tickets else ([bot.pending_ticket] if bot.pending_ticket else [])
-            for t in tickets:
-                if t:
-                    self.bridge.cancel_order(t)
             bot.pending_ticket = None
             bot.pending_tickets = []
             asyncio.create_task(self.broadcast({

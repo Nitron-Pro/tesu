@@ -219,12 +219,14 @@ export function TraderDashboard() {
   };
 
   const sameAccount = (bot: BotInstance) => {
-    if (!account?.login) return true;
+    if (!account?.login) return false;
     if (bot.account_login == null) return true;
     return Number(bot.account_login) === Number(account.login);
   };
   const activeBotList = Object.values(bots).filter(sameAccount);
-  const archivedForAccount = Object.values(archivedBots || {}).filter(sameAccount);
+  const archivedForAccount = Object.values(archivedBots || {}).filter(
+    (bot) => account?.login && bot.account_login != null && Number(bot.account_login) === Number(account.login)
+  );
 
   const handleLaunch = (side: "BUY" | "SELL") => {
     startBot({

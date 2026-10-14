@@ -232,10 +232,6 @@ class PullbackStrategyInstance:
                 risk_distance = sl - entry
                 tp = entry - (risk_distance * self.rr_ratio)
 
-                self.pending_entry = entry
-                self.pending_sl = sl
-                self.pending_tp = tp
-                self.state = "PENDING_ACTIVE"
                 self.log_event("PENDING_PREPARED", {"entry": entry, "sl": sl, "tp": tp, "spread_added": spread_price})
                 return {
                     "action": "PLACE_PENDING",
@@ -329,10 +325,6 @@ class PullbackStrategyInstance:
                 risk_distance = entry - sl
                 tp = entry + (risk_distance * self.rr_ratio)
 
-                self.pending_entry = entry
-                self.pending_sl = sl
-                self.pending_tp = tp
-                self.state = "PENDING_ACTIVE"
                 self.log_event("PENDING_PREPARED", {"entry": entry, "sl": sl, "tp": tp, "spread_added": spread_price})
                 return {
                     "action": "PLACE_PENDING",

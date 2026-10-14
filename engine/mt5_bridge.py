@@ -380,32 +380,40 @@ class MT5Bridge:
         side: str,
         price: float,
         sl: float,
-        tp: float
+        tp: float,
+        attempt: int = 1
     ) -> Optional[Dict[str, float]]:
-        """Nudges a rejected stop price slightly farther from the market so MT5 accepts it."""
+        """
+        Nudges entry, stop loss and take profit together.
+        Each attempt steps farther from the market and widens SL/TP so the broker stop-level is cleared.
+        """
         sym_info = self.get_symbol_info(symbol)
         tick = self.get_tick(symbol)
         if not sym_info or not tick:
             return None
 
-        digits = sym_info["digits"]
-        point = float(sym_info["point"] or 0.00001)
-        stops_level = max(int(sym_info.get("trade_stops_level") or 0), 2)
-        offset = stops_level * point
-        tp_dist = abs(tp - price)
+        digits = int(sym_info["digits"] or 5)
+        point = float(sym_info["point"] or (10 ** -digits))
+        stops_level = max(int(sym_info.get("trade_stops_level") or 0), 1)
+        step = point * max(attempt, 1) * max(stops_level, 3)
 
         if side.upper() == "SELL":
-            new_price = min(price, tick["bid"] - offset) - point
-            new_tp = new_price - tp_dist
+            market_cap = tick["bid"] - (stops_level * point) - step
+            new_price = min(price - step, market_cap)
+            new_sl = max(sl, new_price) + step
+            new_tp = min(tp, new_price) - step
         else:
-            new_price = max(price, tick["ask"] + offset) + point
-            new_tp = new_price + tp_dist
+            market_floor = tick["ask"] + (stops_level * point) + step
+            new_price = max(price + step, market_floor)
+            new_sl = min(sl, new_price) - step
+            new_tp = max(tp, new_price) + step
 
         new_price = round(new_price, digits)
+        new_sl = round(new_sl, digits)
         new_tp = round(new_tp, digits)
-        if new_price == round(price, digits):
+        if new_price == round(price, digits) and new_sl == round(sl, digits) and new_tp == round(tp, digits):
             return None
-        return {"price": new_price, "sl": sl, "tp": new_tp}
+        return {"price": new_price, "sl": new_sl, "tp": new_tp}
 
     def modify_order(self, ticket: int, price: float, sl: float, tp: float, symbol: str) -> bool:
         """Modifies pending order price, SL, and TP."""

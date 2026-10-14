@@ -683,28 +683,37 @@ class TesuManager:
         magic: int,
         comment: str
     ) -> Dict[str, Any]:
-        """Sends a stop order and retries once with a nudged price if MT5 returns Invalid price."""
-        result = self.bridge.send_stop_order_result(symbol, side, entry, sl, tp, volume, magic, comment)
+        """Sends a stop order. On Invalid price, retries up to 5 times, shifting entry, SL and TP each time."""
+        price, cur_sl, cur_tp = entry, sl, tp
+        result = self.bridge.send_stop_order_result(symbol, side, price, cur_sl, cur_tp, volume, magic, comment)
+        result["attempts"] = 1
         if result.get("ok") or not result.get("is_invalid_price"):
             return result
 
-        nudged = self.bridge.adjust_invalid_stop_price(symbol, side, entry, sl, tp)
-        if not nudged:
-            return result
-
-        logger.info(f"Retrying stop order after Invalid price: {entry} -> {nudged['price']}")
-        retry = self.bridge.send_stop_order_result(
-            symbol, side, nudged["price"], nudged["sl"], nudged["tp"], volume, magic, comment
-        )
-        retry["retried"] = True
-        retry["original_price"] = entry
-        return retry
+        for attempt in range(1, 5):
+            nudged = self.bridge.adjust_invalid_stop_price(symbol, side, price, cur_sl, cur_tp, attempt)
+            if not nudged:
+                break
+            price, cur_sl, cur_tp = nudged["price"], nudged["sl"], nudged["tp"]
+            logger.info(
+                f"Invalid price retry {attempt + 1}/5: entry {entry} -> {price}, sl {sl} -> {cur_sl}, tp {tp} -> {cur_tp}"
+            )
+            result = self.bridge.send_stop_order_result(symbol, side, price, cur_sl, cur_tp, volume, magic, comment)
+            result["attempts"] = attempt + 1
+            result["retried"] = True
+            result["original_price"] = entry
+            if result.get("ok") or not result.get("is_invalid_price"):
+                return result
+        return result
 
     def finalize_pending_placement(self, bot: PullbackStrategyInstance, tickets: list, last_result: Dict[str, Any], extra: Dict[str, Any]):
         placed = [t for t in tickets if t]
         if placed:
             bot.pending_ticket = placed[-1]
             bot.pending_tickets = placed
+            bot.pending_entry = extra.get("entry", bot.pending_entry)
+            bot.pending_sl = extra.get("sl", bot.pending_sl)
+            bot.pending_tp = extra.get("tp", bot.pending_tp)
             bot.state = "PENDING_ACTIVE"
             bot.last_error = None
             bot.log_event("ORDER_PLACED", {"tickets": placed, **extra})
@@ -712,7 +721,10 @@ class TesuManager:
             comment = last_result.get("comment") or "ارسال اردر توسط متاتریدر رد شد"
             bot.pending_ticket = None
             bot.pending_tickets = []
-            bot.state = "ORDER_FAILED"
+            bot.pending_entry = None
+            bot.pending_sl = None
+            bot.pending_tp = None
+            bot.state = "WAITING_PULLBACK"
             bot.last_error = comment
             bot.log_event("ORDER_REJECTED", {
                 "comment": comment,
@@ -942,7 +954,7 @@ class TesuManager:
                                             bot,
                                             [r1.get("ticket"), r2.get("ticket")],
                                             last_result,
-                                            {"lots": lots_half, "risk": risk_to_use, "tp1": tp1, "tp2": tp2, "double": True}
+                                            {"lots": lots_half, "risk": risk_to_use, "entry": (r2 if r2.get("ok") else r1).get("price", entry), "sl": sl, "tp": tp2, "tp1": tp1, "tp2": tp2, "double": True}
                                         )
                                     else:
                                         # Single position: also add commission offset to TP so net gain matches full R
@@ -970,9 +982,12 @@ class TesuManager:
                                 elif action_type == "MOVE_PENDING":
                                     tickets_to_move = bot.pending_tickets if bot.pending_tickets else ([bot.pending_ticket] if bot.pending_ticket else [])
                                     if not tickets_to_move:
-                                        bot.state = "ORDER_FAILED"
+                                        bot.state = "WAITING_PULLBACK"
                                         bot.last_error = bot.last_error or "اردر معلقی در متاتریدر ثبت نشد"
-                                    entry = action_req["price"]
+                                        bot.pending_entry = None
+                                        bot.pending_sl = None
+                                        bot.pending_tp = None
+                                    entry = action_req["price"] if tickets_to_move else None
                                     sl = action_req["sl"]
                                     side = bot.side
                                     comm = bot.config.get("commission_per_lot", None)

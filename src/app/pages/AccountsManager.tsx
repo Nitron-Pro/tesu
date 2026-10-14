@@ -304,6 +304,7 @@ export function AccountsManager() {
         </div>
 
         {isMt5Connected && account ? (
+          <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1 font-mono text-sm">
             <div className="bg-muted/40 p-3 rounded-lg">
               <span className="text-xs text-muted-foreground block font-sans">بروکر و سرور</span>
@@ -354,6 +355,7 @@ export function AccountsManager() {
               {account.daily_loss_limit ? ` — سقف ذخیره‌شده: $${account.daily_loss_limit}` : ""}
             </span>
           </div>
+          </>
         ) : (
           <div className="text-center py-6 text-muted-foreground text-xs space-y-2">
             <div>برای فعال‌سازی و دریافت زنده بالانس، از لیست زیر روی دکمه «سوئیچ و اتصال» یکی از حساب‌ها کلیک کنید.</div>

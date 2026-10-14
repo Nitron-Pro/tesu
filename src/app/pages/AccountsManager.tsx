@@ -2,10 +2,6 @@ import { useState, useEffect } from "react";
 import { useTraderStore } from "@/app/store/traderStore";
 import { 
   Wallet, 
-  FolderOpen, 
-  Key, 
-  Server, 
-  ShieldAlert, 
   RefreshCw,
   Power,
   Plus,
@@ -16,7 +12,8 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from "lucide-react";
 
 export interface AccountEntry {
@@ -54,7 +51,7 @@ const DEFAULT_PROFILES: TerminalProfile[] = [
 ];
 
 export function AccountsManager() {
-  const { isMt5Connected, account, connectMt5, bots, mt5ConnectionError } = useTraderStore();
+  const { isMt5Connected, account, connectMt5, bots, mt5ConnectionError, setDailyLossLimit } = useTraderStore();
 
   // Saved profiles
   const [terminals, setTerminals] = useState<TerminalProfile[]>(() => {
@@ -92,13 +89,8 @@ export function AccountsManager() {
   const [collapsedTerminals, setCollapsedTerminals] = useState<Record<string, boolean>>({});
 
   // Direct custom connect state
-  const [customPath, setCustomPath] = useState("C:\\Program Files\\MetaTrader 5\\terminal64.exe");
-  const [customLogin, setCustomLogin] = useState("");
-  const [customPassword, setCustomPassword] = useState("");
-  const [customServer, setCustomServer] = useState("");
-  const [dailyLossLimit, setDailyLossLimit] = useState(50);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [connectingKey, setConnectingKey] = useState<string | null>(null);
+  const [dailyLossInput, setDailyLossInput] = useState("");
 
   // Save terminals to localStorage on change
   useEffect(() => {
@@ -117,6 +109,15 @@ export function AccountsManager() {
       }
     }
   }, [isMt5Connected, account]);
+
+  useEffect(() => {
+    if (!isMt5Connected || !account?.login) return;
+    const saved = localStorage.getItem(`tesu_daily_loss_${account.login}`);
+    setDailyLossInput(saved || "");
+    if (saved) {
+      setDailyLossLimit(Number(account.login), Number(saved));
+    }
+  }, [isMt5Connected, account?.login, setDailyLossLimit]);
 
   const activeBotsCount = Object.keys(bots).length;
 
@@ -244,30 +245,17 @@ export function AccountsManager() {
     }, 2000);
   };
 
-  // Connect directly from bottom form
-  const handleDirectConnect = () => {
-    let stopExistingBots = false;
-    if (activeBotsCount > 0) {
-      const confirmSwitch = confirm(
-        `توجه: در حال حاضر ${activeBotsCount} ربات فعال در حال اجرا هستند.\nآیا می‌خواهید ربات‌های فعال متوقف و بایگانی شوند؟\n(کلیک روی OK ربات‌ها را متوقف می‌کند؛ کلیک روی Cancel ربات‌ها را همچنان فعال نگه می‌دارد)`
-      );
-      stopExistingBots = confirmSwitch;
+  const saveDailyLoss = () => {
+    if (!account?.login) return;
+    const value = dailyLossInput.trim();
+    const key = `tesu_daily_loss_${account.login}`;
+    if (!value || Number(value) <= 0) {
+      localStorage.removeItem(key);
+      setDailyLossLimit(Number(account.login), null);
+      return;
     }
-
-    setIsConnecting(true);
-    setActiveAccountKey(null);
-    localStorage.removeItem("tesu_active_account_key");
-
-    useTraderStore.getState().setActiveTerminalInfo("اتصال دستی", customLogin ? `#${customLogin}` : "حساب جاری");
-
-    connectMt5({
-      path: customPath.trim() || undefined,
-      login: customLogin ? Number(customLogin) : undefined,
-      password: customPassword || undefined,
-      server: customServer.trim() || undefined,
-      stop_existing: stopExistingBots,
-    });
-    setTimeout(() => setIsConnecting(false), 2000);
+    localStorage.setItem(key, value);
+    setDailyLossLimit(Number(account.login), Number(value));
   };
 
   return (
@@ -338,9 +326,37 @@ export function AccountsManager() {
               <span className="text-[10px] text-muted-foreground block">سطح: {account.margin_level?.toFixed(0)}%</span>
             </div>
           </div>
+          <div className="flex flex-wrap items-end gap-3 bg-muted/30 border border-border/60 rounded-lg p-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 mb-1">
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                سقف ضرر روزانه این حساب
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="بدون سقف"
+                value={dailyLossInput}
+                onChange={(e) => setDailyLossInput(e.target.value)}
+                className="w-36 bg-background border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-foreground"
+              />
+            </div>
+            <button
+              onClick={saveDailyLoss}
+              className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-lg"
+            >
+              ثبت سقف
+            </button>
+            <span className="text-[11px] text-muted-foreground">
+              ضرر تاییدشده امروز: ${Math.max(0, -(account.today_realized_pnl || 0)).toFixed(2)}
+              {account.daily_entries_blocked ? " — ورود جدید امروز متوقف است" : ""}
+              {account.daily_loss_limit ? ` — سقف ذخیره‌شده: $${account.daily_loss_limit}` : ""}
+            </span>
+          </div>
         ) : (
           <div className="text-center py-6 text-muted-foreground text-xs space-y-2">
-            <div>برای فعال‌سازی و دریافت زنده بالانس، از لیست زیر روی دکمه «سوئیچ و اتصال» یکی از حساب‌ها کلیک کنید یا فرم اتصال مستقیم را تکمیل نمایید.</div>
+            <div>برای فعال‌سازی و دریافت زنده بالانس، از لیست زیر روی دکمه «سوئیچ و اتصال» یکی از حساب‌ها کلیک کنید.</div>
             {mt5ConnectionError && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 font-medium text-xs max-w-xl mx-auto">
                 {mt5ConnectionError}
@@ -511,102 +527,6 @@ export function AccountsManager() {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Manual Direct Connection Form */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-          <Server className="w-4 h-4 text-primary" />
-          اتصال دستی موقت یا خارج از لیست
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="text-xs font-medium text-muted-foreground block mb-1">
-              مسیر فایل اجرایی متاتریدر (terminal64.exe)
-            </label>
-            <div className="relative">
-              <FolderOpen className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={customPath}
-                onChange={(e) => setCustomPath(e.target.value)}
-                placeholder="C:\Program Files\MetaTrader 5\terminal64.exe"
-                className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-            <span className="text-[10px] text-muted-foreground block mt-1">
-              اگر این فیلد خالی بماند، به متاتریدر فعالِ در حال اجرای ویندوز متصل می‌شود.
-            </span>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">شماره حساب (Login Number)</label>
-            <input
-              type="number"
-              value={customLogin}
-              onChange={(e) => setCustomLogin(e.target.value)}
-              placeholder="اختیاری (اگر روی MT5 فعال است)"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">رمز عبور (Password)</label>
-            <div className="relative">
-              <Key className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-              <input
-                type="password"
-                value={customPassword}
-                onChange={(e) => setCustomPassword(e.target.value)}
-                placeholder="رمز عبور حساب"
-                className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">نام سرور بروکر (Server)</label>
-            <input
-              type="text"
-              value={customServer}
-              onChange={(e) => setCustomServer(e.target.value)}
-              placeholder="مثال: MetaQuotes-Demo یا ICMarkets-Live"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">
-              سقف حد ضرر روزانه (Max Daily Loss $)
-            </label>
-            <div className="relative">
-              <ShieldAlert className="w-4 h-4 absolute left-3 top-2.5 text-rose-500" />
-              <input
-                type="number"
-                min="0"
-                value={dailyLossLimit}
-                onChange={(e) => setDailyLossLimit(Number(e.target.value))}
-                className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-2 text-xs font-mono font-bold text-rose-500 focus:outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-2 flex justify-end">
-          <button
-            onClick={handleDirectConnect}
-            disabled={isConnecting}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-          >
-            {isConnecting ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Power className="w-4 h-4" />
-            )}
-            راه‌اندازی و اتصال پایانه
-          </button>
         </div>
       </div>
 

@@ -47,7 +47,8 @@ class TesuManager:
         self.archived_bots: Dict[str, Dict[str, Any]] = self.load_persisted_archive()
         self.connected_clients: Set[Any] = set()
         self.running = True
-        self.accounts_config: list = []
+        self.daily_loss_limits: Dict[str, float] = self.load_daily_loss_limits()
+        self.today_realized_pnl: float = 0.0
         self.magic_base = 88000
         # Generate dynamic initial magic based on current timestamp to guarantee absolute uniqueness across runs
         self.next_magic = 88000 + (int(datetime.datetime.now().timestamp()) % 100000) * 10
@@ -56,6 +57,103 @@ class TesuManager:
             chat_id=os.environ.get("TELEGRAM_CHAT_ID", ""),
             on_command_callback=self.handle_external_command
         )
+
+    def load_daily_loss_limits(self) -> Dict[str, float]:
+        path = get_storage_path("daily_loss_limits.json")
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    raw = json.load(f)
+                    return {str(k): float(v) for k, v in raw.items() if v}
+            except Exception as e:
+                logger.error(f"Error loading daily loss limits: {e}")
+        return {}
+
+    def save_daily_loss_limits(self):
+        path = get_storage_path("daily_loss_limits.json")
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(self.daily_loss_limits, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving daily loss limits: {e}")
+
+    def set_daily_loss_limit(self, login: Any, limit: Any):
+        key = str(login or "")
+        if not key:
+            return
+        try:
+            value = float(limit) if limit not in (None, "", 0, "0") else 0.0
+        except (TypeError, ValueError):
+            value = 0.0
+        if value > 0:
+            self.daily_loss_limits[key] = value
+        else:
+            self.daily_loss_limits.pop(key, None)
+        self.save_daily_loss_limits()
+
+    def refresh_today_realized_pnl(self) -> float:
+        now_dt = datetime.datetime.now()
+        start = now_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        deals = self.bridge.get_history_deals(start, now_dt + datetime.timedelta(days=1)) or []
+        total = 0.0
+        for d in deals:
+            if getattr(d, "entry", 0) == 1:
+                total += float(d.profit) + float(d.commission or 0.0) + float(d.swap or 0.0)
+        self.today_realized_pnl = round(total, 2)
+        return self.today_realized_pnl
+
+    def daily_loss_blocks_entries(self) -> bool:
+        acc = self.bridge.get_account_summary()
+        login = str(acc.get("login")) if acc else ""
+        limit = self.daily_loss_limits.get(login, 0)
+        if not limit:
+            return False
+        loss = max(0.0, -self.today_realized_pnl)
+        return loss >= float(limit)
+
+    def bot_realized_pnl(self, magic: int) -> float:
+        now_dt = datetime.datetime.now()
+        deals = self.bridge.get_history_deals(now_dt - datetime.timedelta(days=30), now_dt + datetime.timedelta(days=1)) or []
+        total = 0.0
+        for d in deals:
+            if getattr(d, "magic", 0) == magic and getattr(d, "entry", 0) == 1:
+                total += float(d.profit) + float(d.commission or 0.0) + float(d.swap or 0.0)
+        return round(total, 2)
+
+    def apply_bot_loss_limit(self, bot: PullbackStrategyInstance, open_count: int) -> bool:
+        """
+        Returns True when the bot must not open a new order.
+        A breached limit with open positions only pauses new entries.
+        Once flat, the bot resumes only if there is room for one more risk; otherwise it stops.
+        """
+        if not bot.max_loss_usd or bot.max_loss_usd <= 0:
+            bot.loss_hold = False
+            return False
+
+        loss = max(0.0, -self.bot_realized_pnl(bot.config.get("magic", self.magic_base)))
+        room = bot.max_loss_usd - loss
+        risk = float(bot.current_risk_usd or bot.base_risk_usd or 0)
+        breached = loss > bot.max_loss_usd
+
+        if breached and open_count > 0:
+            bot.loss_hold = True
+            return True
+
+        if bot.loss_hold or breached:
+            if open_count > 0:
+                bot.loss_hold = True
+                return True
+            if room >= risk:
+                bot.loss_hold = False
+                return False
+            bot.loss_hold = False
+            bot.state = "CANCELLED"
+            bot.stop_reason = f"حد ضرر بات پر شد (${loss:.2f} از ${bot.max_loss_usd:.2f}) و فاصله کافی برای ریسک بعدی نماند"
+            bot.log_event("BOT_LOSS_LIMIT", {"loss": loss, "limit": bot.max_loss_usd, "room": round(room, 2)})
+            return True
+
+        bot.loss_hold = False
+        return False
 
     def load_persisted_archive(self) -> Dict[str, Dict[str, Any]]:
         """Loads archived bots from local json file so history persists across app restarts / power outages."""
@@ -141,6 +239,7 @@ class TesuManager:
                         "stop_above_price": None,
                         "stop_below_price": None,
                         "stop_reason": "RECOVERED_FROM_MT5",
+                        "account_login": (self.bridge.get_account_summary() or {}).get("login"),
                         "open_positions_count": 0,
                         "state": "FINISHED",
                         "A": None,
@@ -229,6 +328,9 @@ class TesuManager:
                 "equity_curve": equity_curve,
                 "deals": deals_list
             }
+            acc = self.bridge.get_account_summary()
+            if acc and acc.get("login") and not bot_data.get("account_login"):
+                bot_data["account_login"] = int(acc["login"])
             changed = True
 
         if changed:
@@ -452,6 +554,9 @@ class TesuManager:
             "is_double": bot.is_double,
             "consecutive_losses": bot.consecutive_losses,
             "max_open_positions": bot.max_open_positions,
+            "max_loss_usd": bot.max_loss_usd,
+            "loss_hold": bot.loss_hold,
+            "account_login": bot.account_login,
             "martingale_enabled": bot.martingale_enabled,
             "martingale_step_pct": bot.martingale_step_pct,
             "stop_above_price": bot.stop_above_price,
@@ -658,6 +763,17 @@ class TesuManager:
                     "bot": self.serialize_bot(bot)
                 })
 
+        elif cmd == "SET_DAILY_LOSS":
+            login = data.get("login")
+            self.set_daily_loss_limit(login, data.get("limit"))
+            self.refresh_today_realized_pnl()
+            await self.broadcast({
+                "type": "DAILY_LOSS_UPDATE",
+                "login": login,
+                "limit": self.daily_loss_limits.get(str(login)),
+                "today_realized_pnl": self.today_realized_pnl
+            })
+
         elif cmd == "GET_REPORT":
             days = int(data.get("days", 30))
             report = self.bridge.get_full_trading_report(days=days)
@@ -733,6 +849,10 @@ class TesuManager:
         data["magic"] = self.next_magic
         self.next_magic += 1
         bot = PullbackStrategyInstance(bot_id, data)
+        acc = self.bridge.get_account_summary()
+        if acc and acc.get("login"):
+            bot.account_login = int(acc["login"])
+            bot.config["account_login"] = bot.account_login
         # Resolve real broker symbol name (e.g. XAUUSD -> XAUUSD_o)
         real_symbol = self.bridge.resolve_symbol(bot.symbol)
         bot.symbol = real_symbol
@@ -807,6 +927,11 @@ class TesuManager:
                     # Account metrics update
                     account = self.bridge.get_account_summary()
                     if account:
+                        self.refresh_today_realized_pnl()
+                        login_key = str(account.get("login") or "")
+                        account["today_realized_pnl"] = self.today_realized_pnl
+                        account["daily_loss_limit"] = self.daily_loss_limits.get(login_key)
+                        account["daily_entries_blocked"] = self.daily_loss_blocks_entries()
                         await self.broadcast({"type": "ACCOUNT_UPDATE", "account": account})
 
                     # Periodically (every ~2 seconds = 4 loops) broadcast all live open positions
@@ -832,6 +957,11 @@ class TesuManager:
                         if bot.state in ["FINISHED", "CANCELLED"]:
                             continue
 
+                        connected = self.bridge.get_account_summary()
+                        connected_login = int(connected["login"]) if connected and connected.get("login") else None
+                        if bot.account_login and connected_login and int(bot.account_login) != connected_login:
+                            continue
+
                         if bot.waiting_for_start:
                             candles = self.bridge.get_closed_candles(bot.symbol, bot.timeframe, count=30)
                             if candles and candles[-1]["time"] > bot.last_candle_time:
@@ -845,6 +975,10 @@ class TesuManager:
 
                         magic = bot.config.get("magic", self.magic_base)
                         open_positions = self.bridge.get_open_positions_by_magic(magic)
+                        entries_blocked = self.apply_bot_loss_limit(bot, len(open_positions)) or self.daily_loss_blocks_entries()
+                        if bot.state == "CANCELLED":
+                            await self.broadcast({"type": "BOT_UPDATED", "bot": self.serialize_bot(bot)})
+                            continue
 
                         # Check closed deals to detect Loss or Target Hit for Martingale & Risk management
                         if deals_history:
@@ -925,7 +1059,10 @@ class TesuManager:
                                 action_req = bot.process_new_candle(latest, atr, spread_price=spread_price)
                                 action_type = action_req.get("action")
 
-                                if action_type == "PLACE_PENDING":
+                                if action_type == "PLACE_PENDING" and entries_blocked:
+                                    bot.last_error = "حد ضرر بات پر شده؛ تا بسته شدن پوزیشن‌های باز ورود جدید نیست" if bot.loss_hold else "ورود جدید تا آزاد شدن حد ضرر متوقف است"
+                                elif action_type == "PLACE_PENDING":
+                                    bot.last_error = None
                                     entry = action_req["price"]
                                     sl = action_req["sl"]
                                     tp = action_req["tp"]

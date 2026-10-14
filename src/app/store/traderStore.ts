@@ -12,6 +12,9 @@ export interface AccountInfo {
   currency: string;
   server: string;
   company: string;
+  today_realized_pnl?: number;
+  daily_loss_limit?: number | null;
+  daily_entries_blocked?: boolean;
 }
 
 export interface OpenPosition {
@@ -49,6 +52,9 @@ export interface BotInstance {
   start_above_price?: number | null;
   start_below_price?: number | null;
   waiting_for_start?: boolean;
+  max_loss_usd?: number | null;
+  loss_hold?: boolean;
+  account_login?: number | null;
   stop_reason?: string | null;
   last_error?: string | null;
   state: "WAITING_START" | "WAITING_PULLBACK" | "PENDING_ACTIVE" | "POSITION_ACTIVE" | "ORDER_FAILED" | "FINISHED" | "CANCELLED";
@@ -151,12 +157,14 @@ interface TraderState {
     stop_below_price?: number;
     start_above_price?: number;
     start_below_price?: number;
+    max_loss_usd?: number;
   }) => void;
   stopBot: (botId: string) => void;
   updateBotLimits: (botId: string, stopAbove?: number | null, stopBelow?: number | null) => void;
   deleteBot: (botId: string) => void;
   closeAllBotTrades: (botId: string) => void;
   connectMt5: (credentials: { path?: string; login?: number; password?: string; server?: string; stop_existing?: boolean }) => void;
+  setDailyLossLimit: (login: number, limit: number | null) => void;
 }
 
 export const useTraderStore = create<TraderState>((set, get) => ({
@@ -239,8 +247,16 @@ export const useTraderStore = create<TraderState>((set, get) => ({
             set({ symbols: msg.symbols || [] });
           } else if (msg.type === "POSITIONS_UPDATE") {
             set({ openPositions: msg.positions || [] });
-          } else if (msg.type === "ACCOUNT_UPDATE") {
-            set({ account: msg.account });
+          } else if (msg.type === "ACCOUNT_UPDATE" || msg.type === "DAILY_LOSS_UPDATE") {
+            if (msg.type === "ACCOUNT_UPDATE") {
+              set({ account: msg.account });
+            } else if (msg.login) {
+              set((state) => ({
+                account: state.account && Number(state.account.login) === Number(msg.login)
+                  ? { ...state.account, daily_loss_limit: msg.limit, today_realized_pnl: msg.today_realized_pnl }
+                  : state.account,
+              }));
+            }
           } else if (msg.type === "BOT_STARTED" || msg.type === "BOT_UPDATED") {
             set((state) => ({
               bots: { ...state.bots, [msg.bot.bot_id]: msg.bot },
@@ -334,6 +350,13 @@ export const useTraderStore = create<TraderState>((set, get) => ({
     const ws = get().ws;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ action: "CONNECT_MT5", ...credentials }));
+    }
+  },
+
+  setDailyLossLimit: (login, limit) => {
+    const ws = get().ws;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ action: "SET_DAILY_LOSS", login, limit }));
     }
   },
 

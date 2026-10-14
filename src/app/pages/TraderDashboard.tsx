@@ -86,6 +86,7 @@ export function TraderDashboard() {
   const [stopBelowPrice, setStopBelowPrice] = useState<string>("");
   const [startAbovePrice, setStartAbovePrice] = useState<string>("");
   const [startBelowPrice, setStartBelowPrice] = useState<string>("");
+  const [maxLossUsd, setMaxLossUsd] = useState<string>("");
 
   // Presets state
   const [presets, setPresets] = useState<SavedPreset[]>([]);
@@ -177,6 +178,7 @@ export function TraderDashboard() {
     setStopBelowPrice("");
     setStartAbovePrice("");
     setStartBelowPrice("");
+    setMaxLossUsd("");
     setSymbolSearchQuery(bot.symbol);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -216,7 +218,12 @@ export function TraderDashboard() {
     syncPresetsToEngine(updated);
   };
 
-  const activeBotList = Object.values(bots);
+  const activeBotList = Object.values(bots).filter(
+    (bot) => account?.login && Number(bot.account_login) === Number(account.login)
+  );
+  const archivedForAccount = Object.values(archivedBots || {}).filter(
+    (bot) => account?.login && Number(bot.account_login) === Number(account.login)
+  );
 
   const handleLaunch = (side: "BUY" | "SELL") => {
     startBot({
@@ -233,6 +240,7 @@ export function TraderDashboard() {
       stop_below_price: stopBelowPrice ? Number(stopBelowPrice) : undefined,
       start_above_price: startAbovePrice ? Number(startAbovePrice) : undefined,
       start_below_price: startBelowPrice ? Number(startBelowPrice) : undefined,
+      max_loss_usd: maxLossUsd ? Number(maxLossUsd) : undefined,
     });
   };
 
@@ -697,6 +705,20 @@ export function TraderDashboard() {
             </div>
           </div>
 
+          <div className="flex items-center gap-4 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/40">
+            <span className="text-xs font-semibold text-foreground">حد ضرر این بات (دلار، اختیاری):</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="بدون سقف"
+              value={maxLossUsd}
+              onChange={(e) => setMaxLossUsd(e.target.value)}
+              className="w-24 bg-background border border-border rounded px-2 py-1 text-xs text-foreground font-mono"
+            />
+            <span className="text-[11px] text-muted-foreground">فقط ضرر پوزیشن‌های بسته‌شده حساب می‌شود</span>
+          </div>
+
           <span className="text-[11px] text-muted-foreground/80 font-mono">
             * کمیسیون و اسپرد بر اساس حساب زنده MT5 خودکار محاسبه و کسر می‌شود.
           </span>
@@ -788,6 +810,12 @@ export function TraderDashboard() {
                     شروع: {bot.start_above_price ? `بالاتر از ${bot.start_above_price}` : ""}{bot.start_above_price && bot.start_below_price ? " / " : ""}{bot.start_below_price ? `پایین‌تر از ${bot.start_below_price}` : ""}
                   </p>
                 )}
+                {bot.loss_hold && (
+                  <p className="text-xs text-amber-500">حد ضرر پر شده؛ تا بسته شدن پوزیشن‌های باز ورود جدید نیست</p>
+                )}
+                {bot.max_loss_usd ? (
+                  <p className="text-xs text-muted-foreground">حد ضرر بات: ${bot.max_loss_usd}</p>
+                ) : null}
                 {(bot.stop_above_price || bot.stop_below_price) && (
                   <p className="text-xs text-muted-foreground">
                     محدوده: {bot.stop_below_price ? `کف ${bot.stop_below_price}` : ""}{bot.stop_below_price && bot.stop_above_price ? " / " : ""}{bot.stop_above_price ? `سقف ${bot.stop_above_price}` : ""}
@@ -948,7 +976,7 @@ export function TraderDashboard() {
           <div className="flex items-center gap-2">
             <Archive className="w-5 h-5 text-amber-500" />
             <h2 className="text-base font-bold text-foreground">
-              آرشیو و تاریخچه بات‌ها ({Object.keys(archivedBots || {}).length})
+              آرشیو و تاریخچه بات‌های این حساب ({archivedForAccount.length})
             </h2>
             <span className="text-xs text-muted-foreground mr-2">
               (ربات‌هایی که متوقف یا حذف شده‌اند همراه با سوابق ترید و تنظیمات)
@@ -956,13 +984,13 @@ export function TraderDashboard() {
           </div>
         </div>
 
-        {Object.keys(archivedBots || {}).length === 0 ? (
+        {archivedForAccount.length === 0 ? (
           <div className="bg-card/20 border border-border border-dashed rounded-xl p-6 text-center text-muted-foreground">
             <p className="text-xs">هنوز باتی در آرشیو ثبت نشده است. هر بات پس از لغو یا اتمام کار به این بخش اضافه می‌شود.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.values(archivedBots).map((bot) => (
+            {archivedForAccount.map((bot) => (
               <div
                 key={bot.bot_id}
                 className="bg-card/70 border border-border/80 rounded-xl p-4 shadow-sm space-y-3 opacity-90 hover:opacity-100 transition-all"

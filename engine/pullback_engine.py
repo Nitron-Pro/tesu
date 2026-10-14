@@ -45,6 +45,9 @@ class PullbackStrategyInstance:
         self.chain: int = int(config.get("chain", 1))
         self.commission_per_lot: float = float(config.get("commission_per_lot", 0.0))
         self.max_open_positions: int = int(config.get("max_open_positions", 0))  # 0 means unlimited
+        self.max_loss_usd: Optional[float] = float(config["max_loss_usd"]) if config.get("max_loss_usd") else None
+        self.loss_hold: bool = False
+        self.account_login: Optional[int] = int(config["account_login"]) if config.get("account_login") else None
         self.martingale_enabled: bool = bool(config.get("martingale_enabled", False))
         self.martingale_step_pct: float = float(config.get("martingale_step_pct", 10.0))  # e.g. 10%
         self.stop_above_price: Optional[float] = float(config["stop_above_price"]) if config.get("stop_above_price") else None

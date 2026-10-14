@@ -53,12 +53,17 @@
   border-color: hsl(var(--border));
 }
 
+html[data-fa-font="vazirmatn"] { --font-fa: "Vazirmatn", Tahoma, sans-serif; }
+html[data-fa-font="estedad"] { --font-fa: "Estedad", Tahoma, sans-serif; }
+html[data-en-font="inter"] { --font-en: "Inter", "Segoe UI", sans-serif; }
+html[data-en-font="dm-sans"] { --font-en: "DM Sans", "Segoe UI", sans-serif; }
+
 html[dir="rtl"] body {
-  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Vazirmatn, Arial, sans-serif;
+  font-family: var(--font-fa);
 }
 
 html[dir="ltr"] body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-en);
 }
 
 body {

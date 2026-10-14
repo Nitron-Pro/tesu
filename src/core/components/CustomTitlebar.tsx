@@ -85,9 +85,14 @@ export const CustomTitlebar = ({}: CustomTitlebarProps) => {
         <span className="text-xs font-semibold tracking-wide">
           {APP_CONFIG.appName}
         </span>
-        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
-          v{currentVersion}
-        </span>
+        <div className="flex items-center gap-1.5 font-mono text-[10px]">
+          <span className="text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded border border-border/50">
+            v{currentVersion}
+          </span>
+          <span className="text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 font-medium">
+            Core v{APP_CONFIG.coreVersion}
+          </span>
+        </div>
       </div>
 
       {/* Window Controls (Minimize, Maximize/Restore, Close) */}

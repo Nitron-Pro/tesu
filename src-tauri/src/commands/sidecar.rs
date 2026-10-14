@@ -28,7 +28,8 @@ pub struct SidecarStatus {
     pub message: String,
 }
 
-/// Automatically extracts embedded sidecar binary to AppLocalData if present in EMBEDDED_SIDECARS
+/// Automatically extracts embedded sidecar binary to executable's bin directory (preferred for true portable apps)
+/// or AppLocalData as fallback if present in EMBEDDED_SIDECARS
 pub fn ensure_embedded_sidecar_extracted(app_handle: &AppHandle, command: &str) -> Option<PathBuf> {
     let clean_name = Path::new(command)
         .file_name()
@@ -42,35 +43,51 @@ pub fn ensure_embedded_sidecar_extracted(app_handle: &AppHandle, command: &str) 
             || format!("{}.exe", *embedded_name) == clean_name;
 
         if is_match {
-            if let Ok(local_data) = app_handle.path().app_local_data_dir() {
-                let target_dir = local_data.join("bin");
-                let _ = fs::create_dir_all(&target_dir);
-                let target_path = target_dir.join(embedded_name);
+            // Priority 1: Next to main executable in bin/ (True Portable Mode, non-C drive compatible)
+            let mut target_candidates = Vec::new();
 
-                // Write file if not exists or if size differs
-                let should_write = match fs::metadata(&target_path) {
-                    Ok(meta) => meta.len() != bytes.len() as u64,
-                    Err(_) => true,
-                };
-
-                if should_write {
-                    if let Err(e) = fs::write(&target_path, bytes) {
-                        eprintln!(
-                            "Failed to extract embedded sidecar '{}': {}",
-                            target_path.display(),
-                            e
-                        );
-                    } else {
-                        println!(
-                            "Successfully extracted embedded sidecar '{}' to '{}'",
-                            embedded_name,
-                            target_path.display()
-                        );
-                    }
+            if let Ok(exe_path) = std::env::current_exe() {
+                if let Some(exe_dir) = exe_path.parent() {
+                    let portable_bin = exe_dir.join("bin");
+                    target_candidates.push(portable_bin);
                 }
+            }
 
-                if target_path.exists() {
-                    return Some(target_path);
+            // Priority 2: Fallback to local data dir if exe directory is write-protected
+            if let Ok(local_data) = app_handle.path().app_local_data_dir() {
+                target_candidates.push(local_data.join("bin"));
+            }
+
+            for target_dir in target_candidates {
+                if fs::create_dir_all(&target_dir).is_ok() {
+                    let target_path = target_dir.join(embedded_name);
+
+                    // Write file if not exists or if size differs
+                    let should_write = match fs::metadata(&target_path) {
+                        Ok(meta) => meta.len() != bytes.len() as u64,
+                        Err(_) => true,
+                    };
+
+                    if should_write {
+                        if let Err(e) = fs::write(&target_path, bytes) {
+                            eprintln!(
+                                "Failed to extract embedded sidecar '{}': {}",
+                                target_path.display(),
+                                e
+                            );
+                            continue; // Try next candidate dir
+                        } else {
+                            println!(
+                                "Successfully extracted embedded sidecar '{}' to '{}'",
+                                embedded_name,
+                                target_path.display()
+                            );
+                        }
+                    }
+
+                    if target_path.exists() {
+                        return Some(target_path);
+                    }
                 }
             }
         }
@@ -81,9 +98,9 @@ pub fn ensure_embedded_sidecar_extracted(app_handle: &AppHandle, command: &str) 
 
 /// Helper function to locate a binary across standard application search paths:
 /// 1. As an absolute or current directory path
-/// 2. Extracted from compiled-in EMBEDDED_SIDECARS into %LOCALAPPDATA%
-/// 3. Next to the main executable (current_exe dir)
-/// 4. In app_data_dir / app_local_data_dir (e.g. %APPDATA%/com.appName/bin/ or engines/)
+/// 2. Extracted from compiled-in EMBEDDED_SIDECARS into portable bin/ (next to exe)
+/// 3. Next to the main executable (current_exe dir) or in exe_dir/bin
+/// 4. In app_data_dir / app_local_data_dir (fallback)
 /// 5. In resource_dir (bundled sidecars)
 /// 6. In standard system PATH
 pub fn resolve_sidecar_path(app_handle: &AppHandle, command: &str) -> PathBuf {
@@ -98,6 +115,7 @@ pub fn resolve_sidecar_path(app_handle: &AppHandle, command: &str) -> PathBuf {
     }
 
     // 2. Check if it's an embedded binary compiled into the executable via include_bytes!
+    // This extracts to portable exe_dir/bin first
     if let Some(extracted_path) = ensure_embedded_sidecar_extracted(app_handle, command) {
         return extracted_path;
     }
@@ -105,16 +123,27 @@ pub fn resolve_sidecar_path(app_handle: &AppHandle, command: &str) -> PathBuf {
     // 3. Check next to running executable (ideal for portable .exe & sidecars in same folder or subfolder)
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
+            // Check direct child
             let candidate = exe_dir.join(command);
             if candidate.exists() {
                 return candidate;
             }
+            // Check in exe_dir/bin
+            let candidate_bin = exe_dir.join("bin").join(command);
+            if candidate_bin.exists() {
+                return candidate_bin;
+            }
+
             // Also try with .exe if omitted on Windows
             #[cfg(windows)]
             {
                 let with_exe = exe_dir.join(format!("{}.exe", command));
                 if with_exe.exists() {
                     return with_exe;
+                }
+                let with_exe_bin = exe_dir.join("bin").join(format!("{}.exe", command));
+                if with_exe_bin.exists() {
+                    return with_exe_bin;
                 }
             }
         }
@@ -181,6 +210,19 @@ pub fn get_sidecar_directories(app_handle: AppHandle) -> Result<HashMap<String, 
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
             dirs.insert("exe_dir".to_string(), exe_dir.to_string_lossy().to_string());
+            let portable_bin = exe_dir.join("bin");
+            dirs.insert(
+                "portable_bin_dir".to_string(),
+                portable_bin.to_string_lossy().to_string(),
+            );
+            dirs.insert(
+                "portable_data_dir".to_string(),
+                exe_dir.join("data").to_string_lossy().to_string(),
+            );
+            dirs.insert(
+                "suggested_bin_dir".to_string(),
+                portable_bin.to_string_lossy().to_string(),
+            );
         }
     }
 
@@ -189,11 +231,13 @@ pub fn get_sidecar_directories(app_handle: AppHandle) -> Result<HashMap<String, 
             "app_local_data_dir".to_string(),
             local_data.to_string_lossy().to_string(),
         );
-        let bin_dir = local_data.join("bin");
-        dirs.insert(
-            "suggested_bin_dir".to_string(),
-            bin_dir.to_string_lossy().to_string(),
-        );
+        if !dirs.contains_key("suggested_bin_dir") {
+            let bin_dir = local_data.join("bin");
+            dirs.insert(
+                "suggested_bin_dir".to_string(),
+                bin_dir.to_string_lossy().to_string(),
+            );
+        }
     }
 
     if let Ok(data) = app_handle.path().app_data_dir() {
@@ -260,10 +304,23 @@ pub fn start_sidecar(
     let mut cmd = Command::new(&resolved_path);
     cmd.args(&args);
 
+    // Determine portable application directory (parent folder of main .exe)
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+
+    if let Some(ref app_dir) = exe_dir {
+        // Pass PORTABLE_APP_DIR environment variable to the child process
+        cmd.env("PORTABLE_APP_DIR", app_dir);
+    }
+
+    // Set working directory with strict priority to ensure standalone portability
     if let Some(dir) = working_dir {
         cmd.current_dir(dir);
+    } else if let Some(ref app_dir) = exe_dir {
+        // Default working directory to the application's root directory
+        cmd.current_dir(app_dir);
     } else if let Some(parent) = resolved_path.parent() {
-        // Default working directory to the binary's directory if it exists on disk
         if parent.exists() && parent.as_os_str().len() > 0 {
             cmd.current_dir(parent);
         }
@@ -379,4 +436,60 @@ pub fn cleanup_all_sidecars(state: &SidecarManager) {
             let _ = child.wait();
         }
     }
+}
+
+/// List all currently registered sidecars, optionally scoped by app_prefix for complete process isolation
+#[tauri::command]
+pub fn list_sidecars(
+    app_prefix: Option<String>,
+    state: State<'_, SidecarManager>,
+) -> Result<Vec<SidecarStatus>, String> {
+    let mut processes = state.0.lock().map_err(|e| e.to_string())?;
+    let mut results = Vec::new();
+    let mut to_remove = Vec::new();
+
+    for (name, child) in processes.iter_mut() {
+        // Enforce application namespace isolation:
+        // If app_prefix is provided (e.g. "com.nora.tesu" or "tesu:"), only show matching sidecars
+        if let Some(ref prefix) = app_prefix {
+            if !name.starts_with(prefix) {
+                continue;
+            }
+        }
+
+        match child.try_wait() {
+            Ok(None) => {
+                results.push(SidecarStatus {
+                    name: name.clone(),
+                    running: true,
+                    pid: Some(child.id()),
+                    message: "Running".to_string(),
+                });
+            }
+            Ok(Some(exit_code)) => {
+                results.push(SidecarStatus {
+                    name: name.clone(),
+                    running: false,
+                    pid: None,
+                    message: format!("Exited with code: {}", exit_code),
+                });
+                to_remove.push(name.clone());
+            }
+            Err(e) => {
+                results.push(SidecarStatus {
+                    name: name.clone(),
+                    running: false,
+                    pid: None,
+                    message: format!("Error checking status: {}", e),
+                });
+                to_remove.push(name.clone());
+            }
+        }
+    }
+
+    for dead_name in to_remove {
+        processes.remove(&dead_name);
+    }
+
+    Ok(results)
 }

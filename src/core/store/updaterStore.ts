@@ -176,11 +176,12 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   /**
    * For testing & demonstration of the release flow (Only allowed in Development mode)
    */
-  simulateReleaseAvailable: (simVersion = "1.1.0") => {
+  simulateReleaseAvailable: (simVersion?: string) => {
     if (!import.meta.env.DEV) return;
+    const targetVersion = simVersion || "1.4.0";
     set({
       updateAvailable: true,
-      availableVersion: simVersion,
+      availableVersion: targetVersion,
       updateDownloaded: false,
       releaseChangelog: [
         "Major performance upgrade for Serial port listener",

@@ -55,17 +55,23 @@ git commit -m "feat: initial commit of POS app based on Nora boilerplate"
 ### گام ۱: تنظیم شناسنامه و منوی برنامه در `src/app/config.ts`
 فایل `src/app/config.ts` را باز کرده و اطلاعات برنامه خود را وارد کنید:
 
+> **قانون مهم برای ایجنت‌ها:**  
+> ۱. حتماً `updaterEndpoint` را به آدرس مانیفست اختصاصی سرور خودتان (مانند `https://your-domain.com/updates/releases.json`) تغییر دهید و از آدرس‌های لوکال تست استفاده نکنید.  
+> ۲. ابزار تست و شبیه‌سازی نسخه جدید در صفحه تنظیمات صرفاً در حالت توسعه (`DEV`) برای برنامه‌نویس فعال است و در خروجی نهایی کاربر (`production`) وجود ندارد؛ بنابراین نیازی به دستکاری کدهای UI نخواهید داشت.  
+> ۳. سیاست پرتابل مطلق نورا: داده‌ها و فایل‌ها را همواره در مسیر کنار فایل اجرایی ذخیره کنید و از ذخیره‌سازی داده‌های پراکنده در درایو C اجتناب نمایید.  
+> ۴. **پالت تم هسته در `src/index.css` است** (کلاس‌های `.dark` = Dark Navy، `.midnight` = مشکی مطلق، `:root` = روشن). این فایل جزو هسته است و با آپدیت هسته باید checkout شود؛ استایل اختصاصی اپ را فقط در `src/app/` بگذارید و `src/index.css` را بازنویسی نکنید.
+
 ```typescript
 export const APP_CONFIG: AppConfig = {
   appName: "فروشگاه و صندوق نورا (POS)", // نام نمایشی در تایتل‌بار، ترای و هدر
   appId: "com.nora.pos",                  // شناسه منحصر‌به‌فرد
   version: "1.0.0",                       // نسخه اختصاصی این برنامه
-  coreVersion: "1.0.0",                   // نسخه هسته نورا
+  coreVersion: "1.4.0",                   // نسخه هسته نورا
   defaultLanguage: "fa",                  // زبان پیش‌فرض ("fa" یا "en")
-  defaultTheme: "dark",                   // تم پیش‌فرض ("dark" یا "light")
+  defaultTheme: "dark",                   // تم پیش‌فرض ("dark" | "midnight" | "light")
   enableTray: true,                       // فعال‌سازی آیکون ترای ویندوز
   enableUpdater: true,                    // فعال‌سازی موتور آپدیت خودکار
-  updaterEndpoint: "https://your-domain.com/updates/pos.json", // آدرس مانیفست آپدیت
+  updaterEndpoint: "https://your-domain.com/updates/releases.json", // آدرس مانیفست آپدیت اختصاصی اپلیکیشن شما
   about: {
     developer: "تیم نرم‌افزاری نورا",
     website: "https://your-domain.com",
@@ -189,7 +195,8 @@ addTask("بررسی وضعیت اتصال ترازو", "hourly", "hardware");
 ### گام ۵: انتشار نسخه جدید و چنج‌لاگ
 هنگام انتشار هر نسخه جدید:
 1. در `src/app/config.ts` مقدار `version` را مثلاً به `1.1.0` تغییر دهید.
-2. در `src/app/changelog.json` رکورد جدید تغییرات را اضافه کنید:
+2. در `src/app/changelog.json` رکورد جدید را **بالای آرایه** اضافه کنید (newest-first).
+3. در مخزن مادر نورا، همزمان `README.md` و اسناد `docs/` اثرپذیر را هم به‌روز کنید؛ اپ‌های دیگر از همین مستندات هسته استفاده می‌کنند. کامیت بدون چنج‌لاگ و README در مادر ممنوع است.
 ```json
 [
   {
@@ -210,14 +217,15 @@ addTask("بررسی وضعیت اتصال ترازو", "hourly", "hardware");
 ### گام ۶: اجرای باینری‌ها و انجین‌های جانبی (Sidecars - Python / C++ / Go / Node)
 اگر نرم‌افزار شما به یک موتور کمکی جانبی (مثلاً اسکریپت پایتون، باینری هوش مصنوعی یا ورکر C++) نیاز دارد، **هرگز به کدهای Rust دست نزنید!** نورا سرویس استاندارد `SidecarService` را برای این منظور آماده کرده است.
 
-#### استراتژی‌های استقرار باینری (Deployment Strategies):
-1. **تک‌فایل مطلق و ادغام بایت‌ها درون باینری (Embedded Single-File Binary via `include_bytes!`):**  
-   کافی است فایل باینری موتور کمکی خود (مثلاً `engine.exe`، اسکریپت کامپایل‌شده پایتون یا ورکر C++) را درون پوشه `src/app/assets/bin/` قرار دهید (مثلاً `src/app/assets/bin/engine.exe`).
-   اسکریپت بیلد نورا (`scripts/sync-app-config.mjs` و `src-tauri/build.rs`) به صورت خودکار در زمان کامپایل، بایت‌های این باینری را از طریق ماکروی بومی `include_bytes!` مستقیماً درون کدهای ماشین تک‌فایل `.exe` نهایی ادغام و جاسازی می‌کند. هنگام اولین اجرای برنامه توسط کاربر، هسته نورا آن را به صورت خودکار، امن و نامرئی در `%LOCALAPPDATA%/<appId>/bin/` اکسترکت کرده و اجرا می‌نماید. بدین ترتیب نسخه پرتابل شما **۱۰۰٪ تک‌فایل مستقل و بدون نیاز به هیچ فایل یا پوشه جانبی در کنار فایل `.exe`** خواهد بود.
-2. **استقرار در کنار فایل اجرایی (Portable Exe Directory):**  
-   می‌توانید باینری را در کنار فایل اصلی یا درون پوشه `engines/` یا `bin/` کنار فایل `.exe` بگذارید.
-3. **پوشه استاندارد AppData کاربر (%APPDATA% / %LOCALAPPDATA%):**  
-   هسته نورا پوشه‌های استاندارد را به صورت خودکار سرچ می‌کند (`resolve_sidecar_path`). همچنین می‌توانید مسیر دقیق آن را با متد `SidecarService.getSidecarDirectories()` دریافت کنید.
+#### استراتژی‌های استقرار باینری و ایزولاسیون کامل پرتابل (Portable-First):
+1. **تک‌فایل مطلق و بدون ردپا در ویندوز (Embedded Single-File via `include_bytes!`):**  
+   فایل باینری موتور کمکی خود (مثلاً `engine.exe`، اسکریپت کامپایل‌شده پایتون یا ورکر C++) را درون پوشه `src/app/assets/bin/` قرار دهید (مثلاً `src/app/assets/bin/engine.exe`).
+   اسکریپت بیلد نورا (`scripts/sync-app-config.mjs` و `src-tauri/build.rs`) به صورت خودکار در زمان کامپایل، بایت‌های این باینری را از طریق ماکروی بومی `include_bytes!` مستقیماً درون کدهای ماشین تک‌فایل `.exe` نهایی ادغام و جاسازی می‌کند.
+   **نکته معماری پرتابل نورا v1.4.0:** هنگام اجرای برنامه، هسته نورا با اولویت قطعی ابتدا فایل را در پوشه `bin/` **کنار خود فایل اجرایی اصلی برنامه (`current_exe().parent().join("bin")`)** استخراج می‌کند و هیچ فایلی به درایو ویندوز یا C ارسال نمی‌شود.
+2. **ارسال متغیر محیطی `PORTABLE_APP_DIR` و تنظیم Working Directory:**  
+   هنگام اجرای هر سایدکار توسط `start_sidecar`، هسته نورا متغیر محیطی `PORTABLE_APP_DIR` را با آدرس دقیق دایرکتوری اصلی برنامه پر کرده و Working Directory را به پوشه اصلی نرم‌افزار متصل می‌کند تا انجین پایتون یا C++ داده‌ها، دیتابیس و لاگ‌های خود را منحصراً در کنار فایل برنامه ذخیره کند و هرگز وابسته به درایو ویندوز یا Temp نشود.
+3. **استقرار مستقیم در کنار فایل اجرایی (Portable Exe Directory):**  
+   می‌توانید باینری را از قبل در کنار فایل اصلی یا درون پوشه `bin/` کنار فایل `.exe` بگذارید؛ نورا مستقیماً آن را شناسایی می‌کند.
 
 ```typescript
 import { SidecarService } from "@/core/services/sidecar";
@@ -226,12 +234,11 @@ import { SidecarService } from "@/core/services/sidecar";
 const embeddedList = await SidecarService.listEmbeddedSidecars();
 // خروجی مثلا: ["engine.exe"]
 
-// ۲. دریافت مسیرهای استاندارد (اختیاری)
+// ۲. دریافت مسیرهای استاندارد پرتابل و دایرکتوری برنامه
 const dirs = await SidecarService.getSidecarDirectories();
-// dirs.exe_dir, dirs.app_local_data_dir, dirs.suggested_bin_dir
+// dirs.exe_dir, dirs.portable_bin_dir, dirs.portable_data_dir
 
-// ۳. اجرای باینری جانبی در پس‌زمینه (مخفی، بدون پنجره سیاه کنسول و همراه با چک پورت)
-// نکته: نیازی به ارسال مسیر کامل نیست؛ نورا اولویت اول را به باینری توکار (Embedded) می‌دهد و در صورت نیاز خودکار آن را استخراج و اجرا می‌کند:
+// ۳. اجرای باینری جانبی در پس‌زمینه (مخفی، بدون کنسول، با Working Directory کنار exe و تزریق PORTABLE_APP_DIR)
 const status = await SidecarService.startSidecar({
   name: "python_engine",
   command: "engine.exe", // نام فایلی که در src/app/assets/bin/ گذاشته بودید
@@ -257,8 +264,56 @@ await SidecarService.stopSidecar("python_engine");
 
 ---
 
+### گام ۸: استفاده از سیستم Toast، تایید عملیات (Confirm) و زنگوله نوتیفیکیشن
+هسته نورا دارای سیستم اعلان درون‌برنامه‌ای غنی و کامپکت است:
+```typescript
+import { useNotificationStore } from "@/core/store/notificationStore";
+
+const { toast, confirm } = useNotificationStore();
+
+// ۱. پیام اطلاع‌رسانی سریع (Auto Dismiss):
+toast({
+  type: "success", // "info" | "success" | "warning" | "error"
+  title: "فاکتور صادر شد",
+  message: "سفارش با موفقیت در سیستم ثبت گردید.",
+  duration: 4000,
+});
+
+// ۲. تایید عملیات حساس (Confirmation Action Dialog):
+confirm({
+  title: "حذف آیتم فاکتور؟",
+  message: "آیا مطمئن هستید که این سطر حذف شود؟",
+  confirmLabel: "بله، حذف کن",
+  confirmVariant: "destructive",
+  onConfirm: async () => {
+    // اجرای اکشن بعد از تایید کاربر
+    await deleteItem();
+  },
+});
+
+// ۳. تمام ۱۰ نوتیفیکیشن اخیر به همراه تاریخچه در آیکون زنگوله هدر نمایش داده می‌شوند.
+```
+
+---
+
+### گام ۹: پایش زنده و ایزولاسیون پروسس‌های سایدکار و کران‌جاب‌ها
+کلیه موتورهای کمکی (پایتون، C++، Go، اسکریپت‌ها) به صورت پیش‌فرض در فضای نام اختصاصی برنامه شما (`appId:serviceName`) اجرا شده و در تب **`Tasks & Processes > Process & Sidecar Monitor`** مانیتور می‌شوند. هر نرم‌افزار فرزند تنها سایدکارهای خودش را کنترل و متوقف می‌کند.
+
+---
+
+### گام ۱۰: ابزارهای اتوماسیون بیلد و ساخت خروجی (`tools/`)
+پوشه `tools/` در ریشه پروژه مخصوص قرارگیری اسکریپت‌های اتوماسیون محلی است و در `.gitignore` ثبت شده است.
+- **قانون ایجنت‌ها:** ایجنت نباید فرآیند سنگین بیلد کامل پروداکشن (`npm run tauri build`) را بدون دستور کاربر شروع کند. **فرمت اجباری ویندوز `tools/build-app.bat` است**؛ فایل `.ps1` به‌تنهایی قبول نیست. اسکریپت باید به ریشه پروژه `cd` کند و پنجره را تا پایان باز نگه دارد.
+```bat
+tools\build-app.bat
+tools\build-app.bat frontend
+tools\build-app.bat debug
+```
+
+---
+
 ## به‌روزرسانی هسته بویلرپلیت در آینده
-اگر هسته نورا را در مخزن مادر ارتقا دادید، جهت اعمال سریع آپدیت‌ها در پروژه خود بدون آسیب دیدن کدهای `src/app/`، به راهنمای جامع **`docs/UPDATING_CORE.md`** مراجعه کنید یا دستور زیر را اجرا کنید:
+اگر هسته نورا را در مخزن مادر ارتقا دادید، جهت اعمال سریع آپدیت‌ها در پروژه خود بدون آسیب دیدن کدهای `src/app/`، به راهنمای جامع **`docs/UPDATING_CORE.md`** مراجعه کنید. دستور رسمی checkout باید `src/index.css` را هم بیاورد (پالت تم هسته)؛ در غیر این صورت تم Navy/Midnight فرزند کهنه می‌ماند. معادل اسکریپتی:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/sync-core.ps1 -SourcePath "E:\projects\nora"
 ```

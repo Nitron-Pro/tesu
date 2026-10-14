@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { APP_CONFIG } from "@/app/config";
 
 export interface SidecarStatus {
   name: string;
@@ -22,6 +23,14 @@ export interface StartSidecarOptions {
 
 export const SidecarService = {
   /**
+   * Helper to format an isolated scoped sidecar process name: `<appId>:<serviceName>`
+   */
+  scopedName(serviceName: string): string {
+    const prefix = APP_CONFIG.appId || "app";
+    return serviceName.startsWith(`${prefix}:`) ? serviceName : `${prefix}:${serviceName}`;
+  },
+
+  /**
    * Check if a specific TCP port is free on localhost
    */
   async checkPortAvailable(port: number): Promise<boolean> {
@@ -36,9 +45,12 @@ export const SidecarService = {
   /**
    * Generic starter for any external sidecar binary (Python, C++, Go, Node)
    * Runs detached in the background without creating a console window on Windows.
+   * Scopes process names to ensure app-level namespace isolation.
    */
   async startSidecar(options: StartSidecarOptions): Promise<SidecarStatus> {
-    const { name, command, args = [], workingDir, checkPort } = options;
+    const rawName = options.name;
+    const name = this.scopedName(rawName);
+    const { command, args = [], workingDir, checkPort } = options;
 
     // Check port conflict if requested
     if (checkPort) {
@@ -73,7 +85,8 @@ export const SidecarService = {
   /**
    * Stop an active sidecar by name
    */
-  async stopSidecar(name: string): Promise<SidecarStatus> {
+  async stopSidecar(rawName: string): Promise<SidecarStatus> {
+    const name = this.scopedName(rawName);
     try {
       return await invoke<SidecarStatus>("stop_sidecar", { name });
     } catch (e) {
@@ -88,7 +101,8 @@ export const SidecarService = {
   /**
    * Check if a sidecar is alive and get its status
    */
-  async getStatus(name: string): Promise<SidecarStatus> {
+  async getStatus(rawName: string): Promise<SidecarStatus> {
+    const name = this.scopedName(rawName);
     try {
       return await invoke<SidecarStatus>("get_sidecar_status", { name });
     } catch (e) {
@@ -97,6 +111,19 @@ export const SidecarService = {
         running: false,
         message: String(e),
       };
+    }
+  },
+
+  /**
+   * List all running sidecars owned by this specific application (isolated via appId prefix)
+   */
+  async listAppSidecars(isolatedOnly = true): Promise<SidecarStatus[]> {
+    try {
+      const prefix = isolatedOnly ? `${APP_CONFIG.appId}:` : undefined;
+      return await invoke<SidecarStatus[]>("list_sidecars", { appPrefix: prefix || null });
+    } catch (e) {
+      console.warn("listSidecars fallback (browser/mock):", e);
+      return [];
     }
   },
 

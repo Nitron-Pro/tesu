@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { ScheduledTask, TaskExecutionLog, TaskInterval } from "@/core/types/task";
+import { APP_CONFIG } from "@/app/config";
 
-const STORAGE_TASKS = "nora_scheduled_tasks";
-const STORAGE_LOGS = "nora_task_execution_logs";
+const STORAGE_TASKS = `nora_${APP_CONFIG.appId || "base"}_tasks`;
+const STORAGE_LOGS = `nora_${APP_CONFIG.appId || "base"}_task_logs`;
 
 const INITIAL_TASKS: ScheduledTask[] = [
   {
@@ -107,6 +108,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   addTask: (title, interval, category = "system") => {
     const newTask: ScheduledTask = {
       id: `task-${Date.now()}`,
+      appId: APP_CONFIG.appId,
       title,
       scheduledTime:
         interval === "hourly"
@@ -144,6 +146,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const newLog: TaskExecutionLog = {
       id: `log-${Date.now()}`,
       taskId,
+      appId: APP_CONFIG.appId,
       taskTitle: task?.title || "Manual Task",
       executedAt: new Date().toLocaleTimeString(),
       date: new Date().toISOString().split("T")[0],

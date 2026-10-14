@@ -4,6 +4,7 @@ import { HeaderActions } from "@/core/components/HeaderActions";
 import { AppSidebar } from "@/core/components/AppSidebar";
 import { ChangelogModal } from "@/core/components/ChangelogModal";
 import { UpdateModal } from "@/core/components/UpdateModal";
+import { ToastContainer } from "@/core/components/ToastContainer";
 import { UpdateBadge } from "@/core/components/UpdateBadge";
 import { AboutModal } from "@/core/components/AboutModal";
 import { TraderDashboard } from "@/app/pages/TraderDashboard";
@@ -189,6 +190,7 @@ export function App() {
 
       {/* In-App Update Modal (Check / Download / Restart) */}
       <UpdateModal />
+      <ToastContainer />
     </div>
   );
 }

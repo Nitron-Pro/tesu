@@ -12,7 +12,7 @@
 | **هسته دسکتاپ (Backend)** | Tauri 2.0 (Rust) | امنیت بالا، IPC سریع، مصرف حداقل رم و دسترسی بومی به ویندوز |
 | **ارتباط سخت‌افزاری** | Rust Serialport / Raw WinAPIs | پورت‌های سریال (COM)، پرینترها، بارکدخوان، آردوینو |
 | **رابط کاربری (Frontend)** | React 18+ / TypeScript / Vite | فریم‌ورک کامپوننت‌محور با عملکرد بالا |
-| **استایل و پوسته** | Tailwind CSS + Shadcn UI + Lucide | تم دارک پیش‌فرض + پشتیبانی دو زبانه (EN چپ‌چین / FA راست‌چین) |
+| **استایل و پوسته** | Tailwind CSS + Shadcn UI + Lucide | تم‌های Dark Navy / Midnight / Light + پشتیبانی دو زبانه (EN چپ‌چین / FA راست‌چین) |
 | **مدیریت وضعیت** | Zustand | مدیریت تنظیمات، وضعیت پنجره، زبان و تم |
 | **سیستم آپدیت (Updater)** | Tauri Updater + Local/Remote Adaptor | آپگرید درونی، بررسی روزانه/دستی، چنج‌لاگ پس از ریست |
 | **موتور صف و تسک‌ها** | Rust Scheduler + Local SQLite | مدیریت و زمان‌بندی کارهای روزانه، ساعتی و گزارش‌ها |
@@ -23,7 +23,7 @@
 
 ### ۱. سیستم نسخه‌بندی حرفه‌ای (Versioning & SemVer)
 - هر نرم‌افزار نسخه اختصاصی خود (`appVersion`) را در `src/app/config.ts` دارد که مستقل از نسخه موتور هسته (`coreVersion`) مدیریت می‌شود.
-- سابقه نسخه‌ها در فایل `CHANGELOG.md` یا `releases.json` ثبت می‌شود.
+- سابقه نسخه‌ها در `src/app/changelog.json` (منبع مدال What's New) ثبت می‌شود؛ مانیفست آپدیتر در `public/updates/releases.json` است. قبل از هر کامیت مادر، همین چنج‌لاگ و `README.md` باید هم‌تراز باشند.
 
 ### ۲ و ۳. سیستم آپگرید خودکار و دستی (In-App Updater & Daily Check)
 - **دو حالت عملکرد در تنظیمات:**
@@ -104,6 +104,7 @@ nora/
     │   ├── changelog.json          # تاریخچه تغییرات و متادیتای نسخه‌های این نرم‌افزار
     │   └── config.ts               # کانفیگ مرکزی اپ (نام، نسخه، منوهای ۳سطحی و ...)
     ├── components/ui/              # کامپوننت‌های عمومی Shadcn UI
+    ├── index.css                   # [هسته] توکن‌های تم Dark Navy / Midnight / Light
     ├── App.tsx                     # روتینگ و شل اصلی
     └── main.tsx                    # نقطه ورود ری‌اکت
 ```

@@ -41,6 +41,14 @@ if (Test-Path $srcLib) {
     Write-Host "Synced src-tauri/src/lib.rs" -ForegroundColor Yellow
 }
 
+# Theme tokens (Dark Navy / Midnight / Light) live in the core stylesheet
+$srcCss = Join-Path $SourcePath "src/index.css"
+$destCss = Join-Path (Get-Location) "src/index.css"
+if (Test-Path $srcCss) {
+    Copy-Item -Path $srcCss -Destination $destCss -Force
+    Write-Host "Synced src/index.css" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "[SUCCESS] Core files synchronized successfully!" -ForegroundColor Green
 Write-Host "Note: src/app/ was completely untouched and preserved." -ForegroundColor Green

@@ -11,6 +11,7 @@ import {
 import { APP_CONFIG } from "@/app/config";
 import { useSettingsStore } from "@/core/store/settingsStore";
 import { useUpdaterStore } from "@/core/store/updaterStore";
+import { NotificationBell } from "@/core/components/NotificationBell";
 
 interface HeaderActionsProps {
   onOpenSettings: () => void;
@@ -31,6 +32,9 @@ export const HeaderActions = ({
 
   return (
     <div className="relative flex items-center gap-1.5">
+      {/* Notifications Bell with 10 Recent Items Dropdown */}
+      <NotificationBell />
+
       {/* Quick Settings Button */}
       <button
         onClick={onOpenSettings}

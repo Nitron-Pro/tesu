@@ -1,0 +1,34 @@
+---
+description: الزام به‌روزرسانی Changelog، README و مستندات قبل از هر git commit در مخزن مادر نورا
+alwaysApply: true
+---
+
+# قانون مستندات مادر (Docs-First Git)
+
+مخزن `nora` هستهٔ مشترک ده‌ها نرم‌افزار فرزند است. فرزندان هسته، قوانین و `docs/` را با `git checkout core/main -- ... docs .cursor` می‌گیرند. **مستندات کهنه = اپ‌های خراب.**
+
+## قبل از هر `git commit` (بدون استثنا)
+
+کامیت هسته **ممنوع** است مگر این چهار مورد در همان تغییر به‌روز شده باشند:
+
+1. **`src/app/changelog.json`** — رکورد نسخهٔ جاری در **بالای آرایه** (newest-first)، با `version`، `date` (YYYY-MM-DD)، `title` و `highlights` واضح برای کاربر/ایجنت فرزند.
+2. **`README.md`** — درخت پوشه، ویژگی‌ها، دستورات اجرا/بیلد، نسخهٔ نمونه باندل، و هر قابلیت جدیدی که اپ‌های فرزند باید ببینند.
+3. **`docs/ROADMAP.md`** — رویداد همان نسخه/تغییر.
+4. **اسناد اثرپذیر** — اگر معماری، قرارداد، ساخت اپ یا آپدیت هسته عوض شد: `docs/ARCHITECTURE.md`، `docs/CONVENTIONS.md`، `docs/HOW_TO_CREATE_APP.md`، `docs/UPDATING_CORE.md`.
+
+اگر نسخه bump می‌شود، `version` در `changelog.json` باید با `src/app/config.ts` یکی باشد.
+
+## چه چیزی «تغییر هسته» است؟
+
+هر تغییر در `src/core/`، `src/components/ui/`، `src-tauri/`، `.cursor/`، `docs/`، `scripts/` یا قراردادهای قابل‌مصرف فرزند. حتی اصلاح تم، قانون ایجنت، یا اسکریپت هم مستند می‌شود.
+
+## اپ‌های فرزند
+
+- چنج‌لاگ و README **خود اپ** (`src/app/changelog.json`) را هنگام انتشار به‌روز کنند.
+- فایل‌های مادر (`README.md` هسته، `docs/`، `.cursor/rules`) را بازنویسی نکنند؛ از مسیر Core Update بگیرند.
+
+## ممنوع
+
+- کامیت با پیام «بعداً داک می‌نویسم»
+- چنج‌لاگ فقط در ROADMAP بدون `changelog.json` (مدال What's New از JSON خوانده می‌شود)
+- اجرای `git commit` قبل از هم‌تراز کردن اسناد بالا

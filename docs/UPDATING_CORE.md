@@ -40,14 +40,15 @@ git fetch core
 با این دستور، گیت **فقط و فقط** فایل‌ها و پوشه‌های لایه زیرساخت و هسته را از شاخه `core/main` می‌خواند و در پروژه جاری جایگزین می‌کند:
 
 ```bash
-git checkout core/main -- src/core src/components/ui src-tauri .cursor docs scripts package.json
+git checkout core/main -- src/core src/components/ui src/index.css src-tauri .cursor docs scripts package.json
 ```
 
 #### چرا این دستور ۱۰۰٪ ایمن و بدون تداخل است؟
 1. **عدم انجام ادغام (No Merge):** دستور `checkout -- path` یک دستور Copy هوشمند بر مبنای Git Tree است و شاخه‌ها یا کامیت‌های دو پروژه را ادغام نمی‌کند تا کانفلیکتی رخ دهد.
 2. **پوشه `src/app/` دست‌نخورده می‌ماند:** چون `src/app/` در لیست این دستور نیست، تمام صفحات، منوها، شناسنامه و بیزینس اپ شما کاملاً محفوظ می‌ماند.
 3. فایل‌های `src-tauri/`، درایورهای سخت‌افزاری Rust، سرویس‌های ترای و تایتل‌بار به آخرین نسخه ارتقا می‌یابند.
-4. تمام تغییرات هسته مستقیماً به عنوان فایل‌های استیج‌شده (Staged) در گیت پروژه جدید قرار می‌گیرند.
+4. **`src/index.css` بخشی از هسته است:** توکن‌های تم Dark Navy، Midnight و Light در همین فایل تعریف شده‌اند. بدون آن، بعد از آپدیت هسته پالت فرزند کهنه می‌ماند و تم `midnight` کار نمی‌کند.
+5. تمام تغییرات هسته مستقیماً به عنوان فایل‌های استیج‌شده (Staged) در گیت پروژه جدید قرار می‌گیرند.
 
 ---
 
@@ -77,7 +78,7 @@ git commit -m "chore: sync core engine with latest nora vX.Y.Z"
 git fetch core
 
 # 2. Checkout core-only paths (never include src/app/)
-git checkout core/main -- src/core src/components/ui src-tauri .cursor docs scripts package.json
+git checkout core/main -- src/core src/components/ui src/index.css src-tauri .cursor docs scripts package.json
 
 # 3. Verify & install
 npm install
@@ -87,4 +88,6 @@ npm run build
 git add .
 git commit -m "chore: update nora core framework"
 ```
-این فرآیند تضمین می‌کند پروژه‌های جدید برای همیشه از آخرین ارتقاها و پچ‌های امنیتی هسته نورا بهره‌مند شوند، بدون اینکه کدهای برنامه اختصاصی مخدوش گردد.
+این فرآیند تضمین می‌کند پروژه‌های جدید برای همیشه از آخرین ارتقاها، پچ‌های امنیتی، **قوانین `.cursor/rules` و مستندات `docs/`** هسته نورا بهره‌مند شوند، بدون اینکه کدهای برنامه اختصاصی مخدوش گردد.
+
+> مخزن مادر موظف است قبل از هر کامیت، `README.md`، `src/app/changelog.json` و اسناد اثرپذیر را به‌روز کند تا فرزند پس از این checkout نسخه کهنه نگیرد.

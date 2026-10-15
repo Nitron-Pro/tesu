@@ -28,3 +28,7 @@ build/
 # Local developer tools (Nora: not committed)
 tools/
 engine/archived_bots.json
+
+# Release / installer binaries (publish via GitHub Releases — do not track)
+build_output/
+
